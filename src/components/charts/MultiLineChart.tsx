@@ -59,7 +59,7 @@ export default function MultiLineChart({
   if (!data || Object.keys(data).length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-        No data available for chart
+        No data available for this metric. The selected statistic may not have been tracked during this period.
       </div>
     );
   }

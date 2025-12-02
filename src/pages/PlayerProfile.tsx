@@ -99,11 +99,14 @@ export default function PlayerProfile() {
   };
 
   // Prepare chart data for selected metric
+  // Filter out null/undefined values instead of filling with 0
   const chartData = snapshots
     .map(s => ({ 
       snapshot_date: s.snapshot_date, 
-      value: (s as unknown as Record<string, number>)[selectedMetric] || 0 
+      value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric]
     }))
+    .filter(d => d.value != null)
+    .map(d => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
     .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
 
   // Determine if log scale should be used

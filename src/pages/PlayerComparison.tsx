@@ -161,20 +161,29 @@ export default function PlayerComparison() {
   });
 
   // Prepare chart data for comparison
+  // Filter out null/undefined values instead of filling with 0
   const chartData: { [playerName: string]: Array<{ snapshot_date: string; value: number }> } = {};
   Object.entries(comparisonData).forEach(([_discordId, snapshots]) => {
     if (snapshots.length > 0) {
       const playerName = snapshots[0].ign;
-      chartData[playerName] = snapshots
+      const filteredData = snapshots
         .map(s => ({ 
           snapshot_date: s.snapshot_date, 
-          value: (s as unknown as Record<string, number>)[selectedMetric] || 0 
+          value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric]
         }))
+        .filter(d => d.value != null)
+        .map(d => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
         .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
+      
+      // Only add player to chart if they have data for this metric
+      if (filteredData.length > 0) {
+        chartData[playerName] = filteredData;
+      }
     }
   });
 
   // Calculate relative growth for each player
+  // Only include players who have valid values for the selected metric
   const growthData: Array<{
     player: string;
     discordId: string;
@@ -187,25 +196,33 @@ export default function PlayerComparison() {
 
   Object.entries(comparisonData).forEach(([discordId, snapshots]) => {
     if (snapshots.length >= 2 && selectedMetric in snapshots[0]) {
-      const sorted = [...snapshots].sort((a, b) => 
-        new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
-      );
-      const firstValue = (sorted[0] as unknown as Record<string, number>)[selectedMetric] || 0;
-      const lastValue = (sorted[sorted.length - 1] as unknown as Record<string, number>)[selectedMetric] || 0;
+      // Filter to only snapshots with valid values for this metric
+      const validSnapshots = snapshots.filter(s => {
+        const value = (s as unknown as Record<string, number | null | undefined>)[selectedMetric];
+        return value != null;
+      });
       
-      if (firstValue > 0) {
-        const absoluteGrowth = lastValue - firstValue;
-        const growthPct = (absoluteGrowth / firstValue) * 100;
+      if (validSnapshots.length >= 2) {
+        const sorted = [...validSnapshots].sort((a, b) => 
+          new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
+        );
+        const firstValue = (sorted[0] as unknown as Record<string, number>)[selectedMetric];
+        const lastValue = (sorted[sorted.length - 1] as unknown as Record<string, number>)[selectedMetric];
         
-        growthData.push({
-          player: sorted[0].ign,
-          discordId,
-          startingValue: firstValue,
-          currentValue: lastValue,
-          absoluteGrowth,
-          growthPct,
-          weeksTracked: sorted.length,
-        });
+        if (firstValue > 0) {
+          const absoluteGrowth = lastValue - firstValue;
+          const growthPct = (absoluteGrowth / firstValue) * 100;
+          
+          growthData.push({
+            player: sorted[0].ign,
+            discordId,
+            startingValue: firstValue,
+            currentValue: lastValue,
+            absoluteGrowth,
+            growthPct,
+            weeksTracked: sorted.length,
+          });
+        }
       }
     }
   });
