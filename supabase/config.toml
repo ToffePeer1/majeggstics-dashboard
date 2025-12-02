@@ -1,0 +1,7 @@
+# Supabase Edge Functions Configuration
+# https://supabase.com/docs/guides/functions/config
+
+[functions.discord-auth]
+# Disable JWT verification for this function since it's a login endpoint
+# Users don't have a JWT yet when they're trying to authenticate!
+verify_jwt = false
