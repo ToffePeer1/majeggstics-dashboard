@@ -82,9 +82,9 @@ export default function PlayerProfile() {
     { metric: 'Discord ID', value: latest.discord_id },
     { metric: 'Earnings Bonus', value: bigNumberToString(latest.eb) + '%' },
     { metric: 'Soul Eggs', value: bigNumberToString(latest.se) },
-    { metric: 'Prophecy Eggs', value: formatInteger(latest.pe) },
-    { metric: 'Truth Eggs', value: formatInteger(latest.te || 0) },
-    { metric: 'Prestiges', value: formatInteger(latest.num_prestiges) },
+    { metric: 'Prophecy Eggs', value: latest.pe != null ? formatInteger(latest.pe) : 'N/A' },
+    { metric: 'Truth Eggs', value: latest.te != null ? formatInteger(latest.te) : 'N/A' },
+    { metric: 'Prestiges', value: latest.num_prestiges != null ? formatInteger(latest.num_prestiges) : 'N/A' },
     { metric: 'Role', value: latest.farmer_role || 'N/A' },
     { metric: 'Grade', value: latest.grade || 'N/A' },
   ];

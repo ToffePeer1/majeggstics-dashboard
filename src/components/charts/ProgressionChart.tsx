@@ -76,24 +76,52 @@ export default function ProgressionChart({
   const tickvals = formatYAxis ? generateTickValues(data, useLogScale) : null;
   const ticktext = tickvals ? tickvals.map(v => formatTickLabel(v, detectIsEb, detectIsInteger)) : undefined;
 
-  // Create custom hover data
-  const hoverText = data.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
+  // Split data into segments where gaps > 3 weeks don't connect
+  const GAP_THRESHOLD_MS = 3 * 7 * 24 * 60 * 60 * 1000; // 3 weeks in milliseconds
+  const segments: Array<Array<{ snapshot_date: string; value: number }>> = [];
+  let currentSegment: Array<{ snapshot_date: string; value: number }> = [];
+
+  for (let i = 0; i < data.length; i++) {
+    if (currentSegment.length === 0) {
+      currentSegment.push(data[i]);
+    } else {
+      const prevDate = new Date(currentSegment[currentSegment.length - 1].snapshot_date).getTime();
+      const currDate = new Date(data[i].snapshot_date).getTime();
+      const gap = currDate - prevDate;
+
+      if (gap > GAP_THRESHOLD_MS) {
+        // Gap too large, start a new segment
+        segments.push(currentSegment);
+        currentSegment = [data[i]];
+      } else {
+        currentSegment.push(data[i]);
+      }
+    }
+  }
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment);
+  }
+
+  // Create traces for each segment
+  const traces = segments.map((segment, idx) => {
+    const hoverText = segment.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
+    return {
+      x: segment.map(d => d.snapshot_date),
+      y: segment.map(d => d.value),
+      type: 'scatter' as const,
+      mode: (showMarkers ? 'lines+markers' : 'lines') as 'lines+markers' | 'lines',
+      name: yAxisTitle,
+      line: { color: '#5865f2' },
+      marker: { size: 6 },
+      customdata: hoverText,
+      hovertemplate: '%{x}<br>%{customdata}<extra></extra>',
+      showlegend: idx === 0, // Only show legend for first segment
+    };
+  });
 
   return (
     <Plot
-      data={[
-        {
-          x: data.map(d => d.snapshot_date),
-          y: data.map(d => d.value),
-          type: 'scatter',
-          mode: showMarkers ? 'lines+markers' : 'lines',
-          name: yAxisTitle,
-          line: { color: '#5865f2' },
-          marker: { size: 6 },
-          customdata: hoverText,
-          hovertemplate: '%{x}<br>%{customdata}<extra></extra>',
-        },
-      ]}
+      data={traces}
       layout={{
         title: {
           text: title,

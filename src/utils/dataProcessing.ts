@@ -25,7 +25,10 @@ export function calculateWeeklyGains(
   snapshots: PlayerSnapshot[],
   valueColumn: keyof PlayerSnapshot
 ): Array<PlayerSnapshot & { gain: number; gainPct: number }> {
-  const sorted = [...snapshots].sort((a, b) => {
+  // Filter to only snapshots with valid values for this column
+  const validSnapshots = snapshots.filter(s => s[valueColumn] != null);
+  
+  const sorted = [...validSnapshots].sort((a, b) => {
     return new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime();
   });
 
@@ -34,8 +37,8 @@ export function calculateWeeklyGains(
       return { ...snapshot, gain: 0, gainPct: 0 };
     }
 
-    const prevValue = Number(sorted[index - 1][valueColumn] || 0);
-    const currValue = Number(snapshot[valueColumn] || 0);
+    const prevValue = Number(sorted[index - 1][valueColumn]);
+    const currValue = Number(snapshot[valueColumn]);
     const gain = currValue - prevValue;
     const gainPct = prevValue !== 0 ? (gain / prevValue) * 100 : 0;
 
@@ -62,16 +65,19 @@ export function calculateGrowth(
   snapshots: PlayerSnapshot[],
   metric: keyof PlayerSnapshot
 ): GrowthData | null {
-  if (snapshots.length < 2) {
+  // Filter to only snapshots with valid values for this metric
+  const validSnapshots = snapshots.filter(s => s[metric] != null);
+  
+  if (validSnapshots.length < 2) {
     return null;
   }
 
-  const sorted = [...snapshots].sort((a, b) => {
+  const sorted = [...validSnapshots].sort((a, b) => {
     return new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime();
   });
 
-  const firstValue = Number(sorted[0][metric] || 0);
-  const lastValue = Number(sorted[sorted.length - 1][metric] || 0);
+  const firstValue = Number(sorted[0][metric]);
+  const lastValue = Number(sorted[sorted.length - 1][metric]);
 
   if (firstValue === 0) {
     return null;
@@ -98,7 +104,8 @@ export function aggregateStats(snapshots: PlayerSnapshot[]): {
 
   numericColumns.forEach((col) => {
     const values = snapshots
-      .map((s) => Number(s[col] || 0))
+      .filter((s) => s[col] != null)
+      .map((s) => Number(s[col]))
       .filter((v) => !isNaN(v))
       .sort((a, b) => a - b);
 

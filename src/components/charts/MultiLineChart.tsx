@@ -78,19 +78,73 @@ export default function MultiLineChart({
   const tickvals = formatYAxis ? generateTickValues(allValues, useLogScale) : null;
   const ticktext = tickvals ? tickvals.map(v => formatTickLabel(v, detectIsEb, detectIsInteger)) : undefined;
 
-  const traces = Object.entries(data).map(([playerName, playerData]) => {
-    const hoverText = playerData.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
-    
-    return {
-      x: playerData.map(d => d.snapshot_date),
-      y: playerData.map(d => d.value),
-      type: 'scatter' as const,
-      mode: 'lines+markers' as const,
-      name: playerName,
-      marker: { size: 6 },
-      customdata: hoverText,
-      hovertemplate: '%{x}<br>%{customdata}<extra></extra>',
-    };
+  // Split data into segments where gaps > 3 weeks don't connect
+  const GAP_THRESHOLD_MS = 3 * 7 * 24 * 60 * 60 * 1000; // 3 weeks in milliseconds
+
+  function splitIntoSegments(playerData: Array<{ snapshot_date: string; value: number }>) {
+    const segments: Array<Array<{ snapshot_date: string; value: number }>> = [];
+    let currentSegment: Array<{ snapshot_date: string; value: number }> = [];
+
+    for (let i = 0; i < playerData.length; i++) {
+      if (currentSegment.length === 0) {
+        currentSegment.push(playerData[i]);
+      } else {
+        const prevDate = new Date(currentSegment[currentSegment.length - 1].snapshot_date).getTime();
+        const currDate = new Date(playerData[i].snapshot_date).getTime();
+        const gap = currDate - prevDate;
+
+        if (gap > GAP_THRESHOLD_MS) {
+          segments.push(currentSegment);
+          currentSegment = [playerData[i]];
+        } else {
+          currentSegment.push(playerData[i]);
+        }
+      }
+    }
+    if (currentSegment.length > 0) {
+      segments.push(currentSegment);
+    }
+    return segments;
+  }
+
+  // Predefined colors for different players
+  const colors = ['#5865f2', '#ed4245', '#57f287', '#fee75c', '#eb459e', '#9b59b6', '#3498db', '#e67e22'];
+
+  const traces: Array<{
+    x: string[];
+    y: number[];
+    type: 'scatter';
+    mode: 'lines+markers';
+    name: string;
+    marker: { size: number; color: string };
+    line: { color: string };
+    customdata: string[];
+    hovertemplate: string;
+    showlegend: boolean;
+    legendgroup: string;
+  }> = [];
+
+  Object.entries(data).forEach(([playerName, playerData], playerIdx) => {
+    const segments = splitIntoSegments(playerData);
+    const color = colors[playerIdx % colors.length];
+
+    segments.forEach((segment, segmentIdx) => {
+      const hoverText = segment.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
+      
+      traces.push({
+        x: segment.map(d => d.snapshot_date),
+        y: segment.map(d => d.value),
+        type: 'scatter' as const,
+        mode: 'lines+markers' as const,
+        name: playerName,
+        marker: { size: 6, color },
+        line: { color },
+        customdata: hoverText,
+        hovertemplate: '%{x}<br>%{customdata}<extra></extra>',
+        showlegend: segmentIdx === 0, // Only show legend for first segment of each player
+        legendgroup: playerName, // Group segments together in legend
+      });
+    });
   });
 
   return (

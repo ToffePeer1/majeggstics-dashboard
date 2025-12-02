@@ -76,11 +76,14 @@ export default function MyStats() {
   };
 
   // Prepare chart data for selected metric
+  // Filter out null/undefined values instead of filling with 0
   const chartData = snapshots
     .map(s => ({ 
       snapshot_date: s.snapshot_date, 
-      value: (s as unknown as Record<string, number>)[selectedMetric] || 0 
+      value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric]
     }))
+    .filter(d => d.value != null)
+    .map(d => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
     .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
 
   // Determine if log scale should be used
@@ -94,9 +97,9 @@ export default function MyStats() {
     { metric: 'Discord ID', value: latest.discord_id },
     { metric: 'Earnings Bonus', value: bigNumberToString(latest.eb) + '%' },
     { metric: 'Soul Eggs', value: bigNumberToString(latest.se) },
-    { metric: 'Prophecy Eggs', value: formatInteger(latest.pe) },
-    { metric: 'Truth Eggs', value: formatInteger(latest.te || 0) },
-    { metric: 'Prestiges', value: formatInteger(latest.num_prestiges) },
+    { metric: 'Prophecy Eggs', value: latest.pe != null ? formatInteger(latest.pe) : 'N/A' },
+    { metric: 'Truth Eggs', value: latest.te != null ? formatInteger(latest.te) : 'N/A' },
+    { metric: 'Prestiges', value: latest.num_prestiges != null ? formatInteger(latest.num_prestiges) : 'N/A' },
     { metric: 'Role', value: latest.farmer_role || 'N/A' },
     { metric: 'Grade', value: latest.grade || 'N/A' },
   ];
