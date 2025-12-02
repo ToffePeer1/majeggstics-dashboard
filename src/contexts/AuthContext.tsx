@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useCallback, ReactNode } from 'react';
 import {
   createAuthenticatedClient,
   getStoredJWT,
@@ -12,6 +12,11 @@ import {
 } from '@/services/supabaseClient';
 import { DISCORD_CONFIG, ENV } from '@/config/constants';
 import type { AuthState, DiscordAuthResponse, AuthErrorResponse } from '@/types';
+import { AuthContext } from '@/contexts/AuthContextDef';
+
+// Re-export for convenience
+export { AuthContext } from '@/contexts/AuthContextDef';
+export type { AuthContextType } from '@/contexts/AuthContextDef';
 
 /**
  * Auth Context for Discord OAuth with custom JWT
@@ -37,16 +42,6 @@ import type { AuthState, DiscordAuthResponse, AuthErrorResponse } from '@/types'
  * - Any JWT modification invalidates the signature
  * - Supabase rejects requests with invalid signatures
  */
-
-interface AuthContextType extends AuthState {
-  signInWithDiscord: () => void;
-  handleAuthCallback: (code: string) => Promise<void>;
-  logout: () => void;
-  isAdmin: () => boolean;
-  getAuthenticatedClient: () => ReturnType<typeof createAuthenticatedClient> | null;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -235,12 +230,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }
