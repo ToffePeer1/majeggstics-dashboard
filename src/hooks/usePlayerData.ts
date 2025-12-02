@@ -121,23 +121,38 @@ export function useLatestSnapshotDate() {
 }
 
 // Fetch leaderboard data for a specific snapshot date (admin only)
-export function useLeaderboard(snapshotDate: string | null, sortBy: string = 'eb', limit: number = 100) {
+// Fetches ALL players for the snapshot using pagination, sorting/filtering is done client-side
+export function useLeaderboard(snapshotDate: string | null) {
   return useQuery({
-    queryKey: ['leaderboard', snapshotDate, sortBy, limit],
+    queryKey: ['leaderboard', snapshotDate],
     queryFn: async () => {
       if (!snapshotDate) return [];
 
       const client = getClient();
       
-      const { data, error } = await client
-        .from(TABLE_PLAYER_SNAPSHOTS)
-        .select('discord_id, ign, display_name, eb, se, pe, te, num_prestiges, farmer_role, grade, is_guest, active')
-        .eq('snapshot_date', snapshotDate)
-        .order(sortBy, { ascending: false })
-        .limit(limit);
+      // Paginate through all results (Supabase has a 1000 row limit per request)
+      const allData: PlayerSnapshot[] = [];
+      const pageSize = 1000;
+      const maxPages = 100; // Safety limit to prevent infinite loops
 
-      if (error) throw error;
-      return (data || []) as PlayerSnapshot[];
+      for (let page = 0; page < maxPages; page++) {
+        const offset = page * pageSize;
+        const { data, error } = await client
+          .from(TABLE_PLAYER_SNAPSHOTS)
+          .select('discord_id, ign, display_name, eb, se, pe, te, num_prestiges, farmer_role, grade, is_guest, active')
+          .eq('snapshot_date', snapshotDate)
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allData.push(...(data as PlayerSnapshot[]));
+        
+        // Break if we got fewer rows than requested (last page)
+        if (data.length < pageSize) break;
+      }
+
+      return allData;
     },
     enabled: !!snapshotDate,
     staleTime: CACHE_TTL.LATEST_SNAPSHOT,

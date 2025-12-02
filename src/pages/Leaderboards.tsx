@@ -14,7 +14,8 @@ export default function Leaderboards() {
   const [activeTab, setActiveTab] = useState<'table' | 'chart'>('table');
   const [chartLimit, setChartLimit] = useState(10);
 
-  const { data: players, isLoading: playersLoading, error, refetch } = useLeaderboard(latestDate, sortBy, 500);
+  // Fetch all players for the snapshot - sorting/filtering done client-side
+  const { data: players, isLoading: playersLoading, error, refetch } = useLeaderboard(latestDate);
 
   if (dateLoading || playersLoading) {
     return <LoadingSpinner text="Loading leaderboard..." />;
@@ -39,7 +40,7 @@ export default function Leaderboards() {
     );
   }
 
-  // Apply filters - also filter out rows with null TE if TE values exist
+  // Apply filters
   let filteredPlayers = [...players];
   if (!showGuests) {
     filteredPlayers = filteredPlayers.filter(p => !p.is_guest);
@@ -47,11 +48,20 @@ export default function Leaderboards() {
   if (!showInactive) {
     filteredPlayers = filteredPlayers.filter(p => p.active);
   }
-  // Filter out null TE values (like Streamlit does)
-  const hasTeValues = filteredPlayers.some(p => p.te != null);
-  if (hasTeValues) {
-    filteredPlayers = filteredPlayers.filter(p => p.te != null);
-  }
+  
+  // Filter out players with null/undefined values for the sort column
+  // and re-sort client-side to ensure proper ordering (database puts NULLs first in descending order)
+  filteredPlayers = filteredPlayers
+    .filter(p => {
+      const value = (p as unknown as Record<string, number | null | undefined>)[sortBy];
+      return value != null;
+    })
+    .sort((a, b) => {
+      const aVal = (a as unknown as Record<string, number>)[sortBy] || 0;
+      const bVal = (b as unknown as Record<string, number>)[sortBy] || 0;
+      return bVal - aVal; // Descending order
+    });
+  
   filteredPlayers = filteredPlayers.slice(0, limit);
 
   const sortOptions: Record<string, string> = {
