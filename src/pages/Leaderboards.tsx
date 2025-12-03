@@ -3,7 +3,7 @@ import { useCachedLeaderboard } from '@/hooks/usePlayerData';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
-import { formatInteger, bigNumberToString } from '@/utils/formatters';
+import { formatInteger, bigNumberToString, formatLastUpdated } from '@/utils/formatters';
 
 export default function Leaderboards() {
   const { discordId, accessLevel } = useAuth();
@@ -41,8 +41,9 @@ export default function Leaderboards() {
   }
 
   // Format last updated time for display
+  console.log('Leaderboard last updated:', leaderboardData?.lastUpdated);
   const lastUpdated = leaderboardData?.lastUpdated 
-    ? new Date(leaderboardData.lastUpdated).toISOString()
+    ? formatLastUpdated(leaderboardData.lastUpdated)
     : 'Unknown';
   const fromCache = leaderboardData?.fromCache ?? true;
 
@@ -119,6 +120,7 @@ export default function Leaderboards() {
       <div className="info-message" style={{ marginBottom: '1.5rem' }}>
         Last updated: <strong>{lastUpdated}</strong>
         {fromCache && <span style={{ marginLeft: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>(cached)</span>}
+        {' '}(updates every 15 minutes from Wonky)
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>

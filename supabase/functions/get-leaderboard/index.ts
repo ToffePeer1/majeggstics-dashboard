@@ -195,18 +195,34 @@ async function updateCache(
 }
 
 /**
- * Get cached data from the database
+ * Get cached data from the database (handles pagination)
  */
 async function getCachedData(supabase): Promise<LeaderboardPlayer[]> {
-  const { data, error } = await supabase
-    .from('leaderboard_cache')
-    .select('*');
+  const allPlayers: LeaderboardPlayer[] = [];
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  let hasMore = true;
 
-  if (error) {
-    throw new Error(`Failed to fetch cached data: ${error.message}`);
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('leaderboard_cache')
+      .select('*')
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`Failed to fetch cached data: ${error.message}`);
+    }
+
+    if (data && data.length > 0) {
+      allPlayers.push(...data);
+      offset += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
   }
 
-  return data || [];
+  return allPlayers;
 }
 
 /**
