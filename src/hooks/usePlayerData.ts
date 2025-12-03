@@ -1,26 +1,9 @@
 // Custom hooks for data fetching using React Query
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase, createAuthenticatedClient, getStoredJWT } from '@/services/supabaseClient';
 import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTICS, VIEW_UNIQUE_PLAYERS_LATEST, CACHE_TTL } from '@/config/constants';
 import type { PlayerSnapshot, SnapshotMetadata, PlayerListItem, WeeklyStatistics } from '@/types';
-
-/**
- * Helper function to get the appropriate Supabase client
- * Returns authenticated client if JWT exists, otherwise base client
- * 
- * SECURITY NOTE:
- * - Authenticated client includes JWT in Authorization header
- * - Supabase validates JWT signature on every request
- * - RLS policies use claims from JWT (like discord_id) to filter data
- */
-function getClient() {
-  const jwt = getStoredJWT();
-  if (jwt) {
-    return createAuthenticatedClient(jwt);
-  }
-  return supabase;
-}
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Fetch all player snapshots for the current user
@@ -32,12 +15,16 @@ function getClient() {
  * Users cannot forge JWTs because they don't have the signing key.
  */
 export function usePlayerSnapshots(discordId: string | null) {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['playerSnapshots', discordId],
+    // Include jwt in queryKey to invalidate cache when auth changes
+    queryKey: ['playerSnapshots', discordId, jwt],
     queryFn: async () => {
       if (!discordId) return [];
 
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       // The RLS policy will automatically filter to only show this user's data
       // We include the discord_id filter here for clarity and performance
@@ -47,21 +34,25 @@ export function usePlayerSnapshots(discordId: string | null) {
         .eq('discord_id', discordId)
         .order('snapshot_date', { ascending: false });
       
-
       if (error) throw error;
       return (data || []) as PlayerSnapshot[];
     },
-    enabled: !!discordId,
+    // Only run when authenticated and discordId is provided
+    enabled: isAuthenticated && !!discordId,
     staleTime: CACHE_TTL.PLAYER_DATA,
   });
 }
 
 // Fetch player list for autocomplete using materialized view (admin only - requires proper RLS)
 export function usePlayerList() {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['playerList'],
+    // Include jwt in queryKey to invalidate cache when auth changes
+    queryKey: ['playerList', jwt],
     queryFn: async () => {
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       // Use the materialized view to get unique players efficiently
       // Paginate through all results like the Streamlit version
@@ -95,16 +86,21 @@ export function usePlayerList() {
       // Sort by label (case-insensitive)
       return uniquePlayers.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
     },
+    // Only run when authenticated
+    enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_LIST,
   });
 }
 
 // Fetch latest snapshot date
 export function useLatestSnapshotDate() {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['latestSnapshotDate'],
+    queryKey: ['latestSnapshotDate', jwt],
     queryFn: async () => {
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       const { data, error } = await client
         .from(TABLE_SNAPSHOT_METADATA)
@@ -116,6 +112,7 @@ export function useLatestSnapshotDate() {
       if (error) throw error;
       return data?.snapshot_date || null;
     },
+    enabled: isAuthenticated,
     staleTime: CACHE_TTL.LATEST_SNAPSHOT,
   });
 }
@@ -123,12 +120,15 @@ export function useLatestSnapshotDate() {
 // Fetch leaderboard data for a specific snapshot date (admin only)
 // Fetches ALL players for the snapshot using pagination, sorting/filtering is done client-side
 export function useLeaderboard(snapshotDate: string | null) {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['leaderboard', snapshotDate],
+    queryKey: ['leaderboard', snapshotDate, jwt],
     queryFn: async () => {
       if (!snapshotDate) return [];
 
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       // Paginate through all results (Supabase has a 1000 row limit per request)
       const allData: PlayerSnapshot[] = [];
@@ -154,17 +154,20 @@ export function useLeaderboard(snapshotDate: string | null) {
 
       return allData;
     },
-    enabled: !!snapshotDate,
+    enabled: isAuthenticated && !!snapshotDate,
     staleTime: CACHE_TTL.LATEST_SNAPSHOT,
   });
 }
 
 // Fetch all snapshot metadata
 export function useSnapshotMetadata() {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['snapshotMetadata'],
+    queryKey: ['snapshotMetadata', jwt],
     queryFn: async () => {
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       const { data, error } = await client
         .from(TABLE_SNAPSHOT_METADATA)
@@ -174,16 +177,20 @@ export function useSnapshotMetadata() {
       if (error) throw error;
       return (data || []) as SnapshotMetadata[];
     },
+    enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
   });
 }
 
 // Fetch all player snapshots (for trends - admin only)
 export function useAllPlayerSnapshots() {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['allPlayerSnapshots'],
+    queryKey: ['allPlayerSnapshots', jwt],
     queryFn: async () => {
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       const { data, error } = await client
         .from(TABLE_PLAYER_SNAPSHOTS)
@@ -193,18 +200,23 @@ export function useAllPlayerSnapshots() {
       if (error) throw error;
       return (data || []) as PlayerSnapshot[];
     },
+    enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
   });
 }
 
 // Fetch multiple players' data for comparison (admin only)
 export function usePlayerComparison(discordIds: string[]) {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['playerComparison', discordIds],
+    queryKey: ['playerComparison', discordIds, jwt],
     queryFn: async () => {
       if (discordIds.length === 0) return {};
 
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
+      
       const results: { [key: string]: PlayerSnapshot[] } = {};
 
       for (const discordId of discordIds) {
@@ -220,17 +232,20 @@ export function usePlayerComparison(discordIds: string[]) {
 
       return results;
     },
-    enabled: discordIds.length > 0,
+    enabled: isAuthenticated && discordIds.length > 0,
     staleTime: CACHE_TTL.PLAYER_DATA,
   });
 }
 
 // Fetch weekly statistics (pre-aggregated data for trends page)
 export function useWeeklyStatistics() {
+  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
+
   return useQuery({
-    queryKey: ['weeklyStatistics'],
+    queryKey: ['weeklyStatistics', jwt],
     queryFn: async () => {
-      const client = getClient();
+      const client = getAuthenticatedClient();
+      if (!client) throw new Error('Not authenticated');
       
       const { data, error } = await client
         .from(TABLE_WEEKLY_STATISTICS)
@@ -240,6 +255,7 @@ export function useWeeklyStatistics() {
       if (error) throw error;
       return (data || []) as WeeklyStatistics[];
     },
+    enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
   });
 }
