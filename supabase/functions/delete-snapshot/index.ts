@@ -49,7 +49,7 @@ Deno.serve(async (req)=>{
     }
     console.log(`Deleting snapshot for date: ${snapshotDate}`);
     // Delete from player_snapshots
-    const { data: deletedSnapshots, error: snapshotError, count: snapshotCount } = await supabase.from('player_snapshots').delete({
+    const { data: _deletedSnapshots, error: snapshotError, count: snapshotCount } = await supabase.from('player_snapshots').delete({
       count: 'exact'
     }).eq('snapshot_date', snapshotDate);
     if (snapshotError) {
