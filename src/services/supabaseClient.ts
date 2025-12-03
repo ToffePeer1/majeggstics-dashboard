@@ -122,6 +122,23 @@ export function clearStoredAuth(): void {
 }
 
 /**
+ * Decode base64url to string (JWTs use base64url, not standard base64)
+ * Base64url uses - instead of + and _ instead of /
+ */
+function base64UrlDecode(str: string): string {
+  // Replace base64url characters with base64 characters
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  
+  // Add padding if needed
+  const padding = base64.length % 4;
+  if (padding) {
+    base64 += '='.repeat(4 - padding);
+  }
+  
+  return atob(base64);
+}
+
+/**
  * Parse JWT payload without verification
  * 
  * SECURITY NOTE: This is for reading metadata only!
@@ -133,7 +150,7 @@ export function parseJWT(jwt: string): { sub: string; exp: number; discord_id: s
     const parts = jwt.split('.');
     if (parts.length !== 3) return null;
     
-    const payload = JSON.parse(atob(parts[1]));
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
     return payload;
   } catch {
     return null;
