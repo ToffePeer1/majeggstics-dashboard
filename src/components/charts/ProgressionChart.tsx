@@ -10,6 +10,7 @@ interface ProgressionChartProps {
   formatYAxis?: boolean;
   isEb?: boolean; // Whether this is an EB chart (adds % suffix)
   isInteger?: boolean; // Whether values are integers (prestiges, pe, te)
+  showDataLossNote?: boolean; // Whether to show data loss note for prestiges
 }
 
 function generateTickValues(data: Array<{ value: number }>, useLogScale: boolean): number[] | null {
@@ -59,6 +60,7 @@ export default function ProgressionChart({
   formatYAxis = true,
   isEb = false,
   isInteger = false,
+  showDataLossNote = false,
 }: ProgressionChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -71,6 +73,7 @@ export default function ProgressionChart({
   // Auto-detect if this is EB based on title
   const detectIsEb = isEb || yAxisTitle.toLowerCase().includes('eb') || title.toLowerCase().includes('earnings bonus');
   const detectIsInteger = isInteger || ['prestige', 'pe', 'te'].some(t => yAxisTitle.toLowerCase().includes(t));
+  const shouldShowNote = showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
 
   // Generate formatted y-axis ticks
   const tickvals = formatYAxis ? generateTickValues(data, useLogScale) : null;
@@ -120,40 +123,47 @@ export default function ProgressionChart({
   });
 
   return (
-    <Plot
-      data={traces}
-      layout={{
-        title: {
-          text: title,
-          font: { size: 18 },
-        },
-        xaxis: {
-          title: 'Date',
-          type: 'date',
-        },
-        yaxis: {
-          title: yAxisTitle,
-          type: useLogScale ? 'log' : 'linear',
-          ...(tickvals && ticktext ? {
-            tickmode: 'array' as const,
-            tickvals: tickvals,
-            ticktext: ticktext,
-          } : {}),
-        },
-        hovermode: 'x unified',
-        height: 500,
-        margin: { l: 80, r: 40, t: 60, b: 60 },
-        plot_bgcolor: '#f6f6f7',
-        paper_bgcolor: '#ffffff',
-      }}
-      config={{
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-      }}
-      style={{ width: '100%' }}
-    />
+    <>
+      <Plot
+        data={traces}
+        layout={{
+          title: {
+            text: title,
+            font: { size: 18 },
+          },
+          xaxis: {
+            title: 'Date',
+            type: 'date',
+          },
+          yaxis: {
+            title: yAxisTitle,
+            type: useLogScale ? 'log' : 'linear',
+            ...(tickvals && ticktext ? {
+              tickmode: 'array' as const,
+              tickvals: tickvals,
+              ticktext: ticktext,
+            } : {}),
+          },
+          hovermode: 'x unified',
+          height: 500,
+          margin: { l: 80, r: 40, t: 60, b: 60 },
+          plot_bgcolor: '#f6f6f7',
+          paper_bgcolor: '#ffffff',
+        }}
+        config={{
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false,
+          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+        }}
+        style={{ width: '100%' }}
+      />
+      {shouldShowNote && (
+        <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
+          <strong>📋 Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+        </p>
+      )}
+    </>
   );
 }
 

@@ -9,6 +9,7 @@ interface MultiLineChartProps {
   formatYAxis?: boolean;
   isEb?: boolean;
   isInteger?: boolean;
+  showDataLossNote?: boolean; // Whether to show data loss note for prestiges
 }
 
 function generateTickValues(allValues: number[], useLogScale: boolean): number[] | null {
@@ -55,6 +56,7 @@ export default function MultiLineChart({
   formatYAxis = true,
   isEb = false,
   isInteger = false,
+  showDataLossNote = false,
 }: MultiLineChartProps) {
   if (!data || Object.keys(data).length === 0) {
     return (
@@ -67,6 +69,7 @@ export default function MultiLineChart({
   // Auto-detect if this is EB based on title
   const detectIsEb = isEb || yAxisTitle.toLowerCase().includes('eb') || title.toLowerCase().includes('earnings bonus');
   const detectIsInteger = isInteger || ['prestige', 'pe', 'te'].some(t => yAxisTitle.toLowerCase().includes(t));
+  const shouldShowNote = showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
 
   // Collect all y values for tick generation
   const allValues: number[] = [];
@@ -148,48 +151,55 @@ export default function MultiLineChart({
   });
 
   return (
-    <Plot
-      data={traces}
-      layout={{
-        title: {
-          text: title,
-          font: { size: 18 },
-        },
-        xaxis: {
-          title: 'Date',
-          type: 'date',
-        },
-        yaxis: {
-          title: yAxisTitle,
-          type: useLogScale ? 'log' : 'linear',
-          ...(tickvals && ticktext ? {
-            tickmode: 'array' as const,
-            tickvals: tickvals,
-            ticktext: ticktext,
-          } : {}),
-        },
-        hovermode: 'x unified',
-        height: 500,
-        margin: { l: 80, r: 40, t: 60, b: 60 },
-        plot_bgcolor: '#f6f6f7',
-        paper_bgcolor: '#ffffff',
-        showlegend: true,
-        legend: {
-          orientation: 'h',
-          yanchor: 'bottom',
-          y: 1.02,
-          xanchor: 'right',
-          x: 1,
-        },
-      }}
-      config={{
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-      }}
-      style={{ width: '100%' }}
-    />
+    <>
+      <Plot
+        data={traces}
+        layout={{
+          title: {
+            text: title,
+            font: { size: 18 },
+          },
+          xaxis: {
+            title: 'Date',
+            type: 'date',
+          },
+          yaxis: {
+            title: yAxisTitle,
+            type: useLogScale ? 'log' : 'linear',
+            ...(tickvals && ticktext ? {
+              tickmode: 'array' as const,
+              tickvals: tickvals,
+              ticktext: ticktext,
+            } : {}),
+          },
+          hovermode: 'x unified',
+          height: 500,
+          margin: { l: 80, r: 40, t: 60, b: 60 },
+          plot_bgcolor: '#f6f6f7',
+          paper_bgcolor: '#ffffff',
+          showlegend: true,
+          legend: {
+            orientation: 'h',
+            yanchor: 'bottom',
+            y: 1.02,
+            xanchor: 'right',
+            x: 1,
+          },
+        }}
+        config={{
+          responsive: true,
+          displayModeBar: true,
+          displaylogo: false,
+          modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+        }}
+        style={{ width: '100%' }}
+      />
+      {shouldShowNote && (
+        <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
+          <strong>📋 Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+        </p>
+      )}
+    </>
   );
 }
 
