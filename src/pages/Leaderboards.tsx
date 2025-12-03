@@ -1,20 +1,21 @@
 import { useState } from 'react';
-import { useLatestSnapshotDate, useLeaderboard } from '@/hooks/usePlayerData';
+import { useCachedLeaderboard } from '@/hooks/usePlayerData';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { formatInteger, bigNumberToString } from '@/utils/formatters';
 
 export default function Leaderboards() {
-  const { data: latestDate, isLoading: dateLoading } = useLatestSnapshotDate();
-  const { discordId } = useAuth();
+  const { discordId, accessLevel } = useAuth();
+  const isAdmin = accessLevel === 'admin';
   const [sortBy, setSortBy] = useState('eb');
   const [showInactive, setShowInactive] = useState(true);
 
-  // Fetch all players for the snapshot - sorting/filtering done client-side
-  const { data: players, isLoading: playersLoading, error, refetch } = useLeaderboard(latestDate);
+  // Fetch cached leaderboard data from edge function
+  // Data is automatically refreshed if older than 15 minutes
+  const { data: leaderboardData, isLoading, error, refetch } = useCachedLeaderboard();
 
-  if (dateLoading || playersLoading) {
+  if (isLoading) {
     return <LoadingSpinner text="Loading leaderboard..." />;
   }
 
@@ -28,14 +29,22 @@ export default function Leaderboards() {
     );
   }
 
-  if (!players || players.length === 0) {
+  const players = leaderboardData?.players || [];
+
+  if (players.length === 0) {
     return (
       <ErrorMessage
         title="No Data Available"
-        message="No leaderboard data found for the latest snapshot."
+        message="No leaderboard data available."
       />
     );
   }
+
+  // Format last updated time for display
+  const lastUpdated = leaderboardData?.lastUpdated 
+    ? new Date(leaderboardData.lastUpdated).toLocaleString()
+    : 'Unknown';
+  const fromCache = leaderboardData?.fromCache ?? true;
 
   // Store total player count before filtering
   const totalPlayerCount = players.length;
@@ -83,7 +92,8 @@ export default function Leaderboards() {
     se: 'Soul Eggs',
     pe: 'Prophecy Eggs',
     te: 'Truth Eggs',
-    num_prestiges: 'Number of Prestiges',
+    // Only show prestige sorting option for admins (data is not fetched for non-admins)
+    ...(isAdmin ? { num_prestiges: 'Number of Prestiges' } : {}),
   };
 
   // Calculate statistics
@@ -107,7 +117,8 @@ export default function Leaderboards() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>🏆 Current Leaderboards</h1>
 
       <div className="info-message" style={{ marginBottom: '1.5rem' }}>
-        📅 Showing leaderboard for: <strong>{latestDate}</strong>
+        Last updated: <strong>{lastUpdated}</strong>
+        {fromCache && <span style={{ marginLeft: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>(cached)</span>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
@@ -182,7 +193,7 @@ export default function Leaderboards() {
               <th>SE</th>
               <th>PE</th>
               <th>TE</th>
-              <th>Prestiges</th>
+              {isAdmin && <th>Prestiges</th>}
               <th>Role</th>
               <th>Grade</th>
             </tr>
@@ -197,7 +208,7 @@ export default function Leaderboards() {
                 <td>{bigNumberToString(player.se)}</td>
                 <td>{formatInteger(player.pe)}</td>
                 <td>{player.te != null ? formatInteger(player.te) : 'N/A'}</td>
-                <td>{formatInteger(player.num_prestiges)}</td>
+                {isAdmin && <td>{formatInteger(player.num_prestiges)}</td>}
                 <td>{player.farmer_role}</td>
                 <td>{player.grade}</td>
               </tr>

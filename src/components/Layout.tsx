@@ -126,6 +126,9 @@ export default function Layout() {
                 <NavLink to="/my-stats">
                   My Stats
                 </NavLink>
+                <NavLink to="/leaderboards">
+                  Leaderboards
+                </NavLink>
                 <div className="info-message" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
                   ℹ️ Admin users have access to additional analytics pages.
                 </div>

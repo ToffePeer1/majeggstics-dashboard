@@ -1,7 +1,7 @@
 // Custom hooks for data fetching using React Query
 
 import { useQuery } from '@tanstack/react-query';
-import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTICS, VIEW_UNIQUE_PLAYERS_LATEST, CACHE_TTL } from '@/config/constants';
+import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTICS, VIEW_UNIQUE_PLAYERS_LATEST, CACHE_TTL, ENV, EDGE_FUNCTIONS } from '@/config/constants';
 import type { PlayerSnapshot, SnapshotMetadata, PlayerListItem, WeeklyStatistics } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -117,48 +117,6 @@ export function useLatestSnapshotDate() {
   });
 }
 
-// Fetch leaderboard data for a specific snapshot date (admin only)
-// Fetches ALL players for the snapshot using pagination, sorting/filtering is done client-side
-export function useLeaderboard(snapshotDate: string | null) {
-  const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
-
-  return useQuery({
-    queryKey: ['leaderboard', snapshotDate, jwt],
-    queryFn: async () => {
-      if (!snapshotDate) return [];
-
-      const client = getAuthenticatedClient();
-      if (!client) throw new Error('Not authenticated');
-      
-      // Paginate through all results (Supabase has a 1000 row limit per request)
-      const allData: PlayerSnapshot[] = [];
-      const pageSize = 1000;
-      const maxPages = 100; // Safety limit to prevent infinite loops
-
-      for (let page = 0; page < maxPages; page++) {
-        const offset = page * pageSize;
-        const { data, error } = await client
-          .from(TABLE_PLAYER_SNAPSHOTS)
-          .select('discord_id, ign, display_name, eb, se, pe, te, num_prestiges, farmer_role, grade, is_guest, active')
-          .eq('snapshot_date', snapshotDate)
-          .range(offset, offset + pageSize - 1);
-
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-
-        allData.push(...(data as PlayerSnapshot[]));
-        
-        // Break if we got fewer rows than requested (last page)
-        if (data.length < pageSize) break;
-      }
-
-      return allData;
-    },
-    enabled: isAuthenticated && !!snapshotDate,
-    staleTime: CACHE_TTL.LATEST_SNAPSHOT,
-  });
-}
-
 // Fetch all snapshot metadata
 export function useSnapshotMetadata() {
   const { getAuthenticatedClient, isAuthenticated, jwt } = useAuth();
@@ -257,5 +215,74 @@ export function useWeeklyStatistics() {
     },
     enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
+  });
+}
+
+/**
+ * Cached Leaderboard Response from Edge Function
+ */
+export interface CachedLeaderboardResponse {
+  players: Array<{
+    discord_id: string;
+    ign: string;
+    display_name: string | null;
+    discord_name: string;
+    eb: number;
+    se: number;
+    pe: number;
+    te: number | null;
+    num_prestiges: number | null;
+    farmer_role: string | null;
+    grade: string;
+    is_guest: boolean;
+    active: boolean;
+  }>;
+  lastUpdated: string;
+  playerCount: number;
+  fromCache: boolean;
+}
+
+/**
+ * Fetch cached leaderboard data from the Edge Function
+ * 
+ * This hook fetches current/live player data with automatic caching:
+ * - If data is fresh (< 15 minutes old): returns cached data instantly
+ * - If data is stale (>= 15 minutes old): fetches fresh data from bot API
+ * 
+ * The Edge Function handles:
+ * - JWT validation
+ * - Access level filtering (non-admins don't see num_prestiges)
+ * - Cache management
+ */
+export function useCachedLeaderboard() {
+  const { isAuthenticated, jwt } = useAuth();
+
+  return useQuery({
+    queryKey: ['cachedLeaderboard', jwt],
+    queryFn: async () => {
+      if (!jwt) throw new Error('Not authenticated');
+
+      const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_LEADERBOARD}`;
+      
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch leaderboard: ${response.status}`);
+      }
+
+      const data: CachedLeaderboardResponse = await response.json();
+      return data;
+    },
+    enabled: isAuthenticated && !!jwt,
+    staleTime: CACHE_TTL.LATEST_SNAPSHOT,
+    // Refetch every 5 minutes to check for updates
+    refetchInterval: 5 * 60 * 1000,
   });
 }

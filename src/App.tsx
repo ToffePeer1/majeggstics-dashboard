@@ -64,7 +64,7 @@ function AppRoutes() {
         <Route
           path="/leaderboards"
           element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute>
               <Leaderboards />
             </ProtectedRoute>
           }

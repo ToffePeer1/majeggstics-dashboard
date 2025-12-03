@@ -67,6 +67,7 @@ export const DISCORD_CONFIG = {
 // Edge Function endpoints
 export const EDGE_FUNCTIONS = {
   DISCORD_AUTH: '/functions/v1/discord-auth',
+  GET_LEADERBOARD: '/functions/v1/get-leaderboard',
 } as const;
 
 // Grade colors for charts
