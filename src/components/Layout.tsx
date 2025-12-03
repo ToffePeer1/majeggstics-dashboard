@@ -1,5 +1,5 @@
-import React from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { PAGE_TITLE } from '@/config/constants';
 import { getDiscordAvatarUrl } from '@/services/permissions';
@@ -7,6 +7,22 @@ import { getDiscordAvatarUrl } from '@/services/permissions';
 export default function Layout() {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar when route changes (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Close sidebar on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -28,13 +44,27 @@ export default function Layout() {
         }}
       >
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '600' }}>
-            {PAGE_TITLE}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={sidebarOpen}
+            >
+              <span className={`hamburger ${sidebarOpen ? 'open' : ''}`}>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </button>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '600' }}>
+              {PAGE_TITLE}
+            </h1>
+          </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {user && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {avatarUrl && (
                   <img
                     src={avatarUrl}
@@ -42,7 +72,7 @@ export default function Layout() {
                     style={{ width: '32px', height: '32px', borderRadius: '50%' }}
                   />
                 )}
-                <div>
+                <div className="user-details">
                   <div style={{ fontWeight: '500' }}>{username}</div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
                     {isAdmin() ? 'Admin' : 'User'}
@@ -50,8 +80,13 @@ export default function Layout() {
                 </div>
               </div>
             )}
-            <button onClick={handleLogout} className="button button-secondary">
-              🚪 Logout
+            <button onClick={handleLogout} className="button button-secondary logout-btn">
+              <svg className="logout-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span className="logout-text">Logout</span>
             </button>
           </div>
         </div>
@@ -59,15 +94,14 @@ export default function Layout() {
 
       {/* Sidebar + Content */}
       <div style={{ display: 'flex', flex: 1 }}>
+        {/* Sidebar Overlay (mobile) */}
+        <div
+          className={`sidebar-overlay ${sidebarOpen ? 'visible' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+        />
+
         {/* Sidebar */}
-        <aside
-          style={{
-            width: '250px',
-            background: 'var(--color-bg)',
-            borderRight: '1px solid var(--color-border)',
-            padding: '1.5rem 1rem',
-          }}
-        >
+        <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {isAdmin() ? (
               <>
@@ -121,7 +155,7 @@ export default function Layout() {
         </aside>
 
         {/* Main Content */}
-        <main style={{ flex: 1, padding: '2rem' }}>
+        <main className="main-content">
           <Outlet />
         </main>
       </div>
