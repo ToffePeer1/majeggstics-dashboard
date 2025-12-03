@@ -42,7 +42,7 @@ export default function Leaderboards() {
 
   // Format last updated time for display
   const lastUpdated = leaderboardData?.lastUpdated 
-    ? new Date(leaderboardData.lastUpdated).toLocaleString()
+    ? new Date(leaderboardData.lastUpdated).toISOString()
     : 'Unknown';
   const fromCache = leaderboardData?.fromCache ?? true;
 
