@@ -101,11 +101,11 @@ export default function WeeklyTrends() {
   // Prepare grade distribution data
   const gradeDistData = stats.map(s => ({
     snapshot_date: s.snapshot_date,
-    aaa: s.grade_aaa,
-    aa: s.grade_aa,
-    a: s.grade_a,
-    b: s.grade_b,
-    c: s.grade_c,
+    AAA: s.grade_AAA,
+    AA: s.grade_AA,
+    A: s.grade_A,
+    B: s.grade_B,
+    C: s.grade_C,
   }));
 
   // Prepare community stats chart data
@@ -176,7 +176,7 @@ export default function WeeklyTrends() {
       {/* Player Count Over Time */}
       {showPlayerCount && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>👥 Active Players Over Time</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Active Players Over Time</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             <ProgressionChart
               data={playerCountData}
@@ -212,7 +212,7 @@ export default function WeeklyTrends() {
       {/* Grade Distribution Over Time */}
       {showGradeDist && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>🎖️ Grade Distribution Over Time</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Grade Distribution Over Time</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             <GradeDistributionChart
               data={gradeDistData}
@@ -230,11 +230,11 @@ export default function WeeklyTrends() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>AAA</td><td>{formatInteger(latestStats.grade_aaa)}</td></tr>
-                  <tr><td>AA</td><td>{formatInteger(latestStats.grade_aa)}</td></tr>
-                  <tr><td>A</td><td>{formatInteger(latestStats.grade_a)}</td></tr>
-                  <tr><td>B</td><td>{formatInteger(latestStats.grade_b)}</td></tr>
-                  <tr><td>C</td><td>{formatInteger(latestStats.grade_c)}</td></tr>
+                  <tr><td>AAA</td><td>{formatInteger(latestStats.grade_AAA)}</td></tr>
+                  <tr><td>AA</td><td>{formatInteger(latestStats.grade_AA)}</td></tr>
+                  <tr><td>A</td><td>{formatInteger(latestStats.grade_A)}</td></tr>
+                  <tr><td>B</td><td>{formatInteger(latestStats.grade_B)}</td></tr>
+                  <tr><td>C</td><td>{formatInteger(latestStats.grade_C)}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -245,7 +245,7 @@ export default function WeeklyTrends() {
       {/* Community Statistics Trends */}
       {showCommunityStats && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📊 Community Statistics Trends</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Community Statistics Trends</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             {/* Selectors */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -303,43 +303,6 @@ export default function WeeklyTrends() {
           </div>
         </>
       )}
-
-      {/* Weekly Statistics Table */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📋 Weekly Statistics Table</h2>
-      <div className="card">
-        <div style={{ overflowX: 'auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Players</th>
-                <th>Active</th>
-                <th>Guests</th>
-                <th>AAA</th>
-                <th>AA</th>
-                <th>A</th>
-                <th>B</th>
-                <th>C</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...stats].reverse().slice(0, 50).map((row) => (
-                <tr key={row.snapshot_date}>
-                  <td>{row.snapshot_date}</td>
-                  <td>{formatInteger(row.player_count)}</td>
-                  <td>{formatInteger(row.active_player_count)}</td>
-                  <td>{formatInteger(row.guest_count)}</td>
-                  <td>{formatInteger(row.grade_aaa)}</td>
-                  <td>{formatInteger(row.grade_aa)}</td>
-                  <td>{formatInteger(row.grade_a)}</td>
-                  <td>{formatInteger(row.grade_b)}</td>
-                  <td>{formatInteger(row.grade_c)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }

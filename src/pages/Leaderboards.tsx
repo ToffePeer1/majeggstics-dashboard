@@ -45,7 +45,6 @@ export default function Leaderboards() {
   const lastUpdated = leaderboardData?.lastUpdated 
     ? formatLastUpdated(leaderboardData.lastUpdated)
     : 'Unknown';
-  const fromCache = leaderboardData?.fromCache ?? true;
 
   // Store total player count before filtering
   const totalPlayerCount = players.length;
@@ -115,11 +114,10 @@ export default function Leaderboards() {
 
   return (
     <div className="container">
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>🏆 Current Leaderboards</h1>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Current Leaderboards</h1>
 
       <div className="info-message" style={{ marginBottom: '1.5rem' }}>
         Last updated: <strong>{lastUpdated}</strong>
-        {fromCache && <span style={{ marginLeft: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>(cached)</span>}
         {' '}(updates every 15 minutes from Wonky)
       </div>
 

@@ -211,7 +211,14 @@ export function useWeeklyStatistics() {
         .order('snapshot_date', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as WeeklyStatistics[];
+      return (data || []).map(({ grade_aaa, grade_aa, grade_a, grade_b, grade_c, ...entry }) => ({
+        ...entry,
+        grade_AAA: grade_aaa,
+        grade_AA: grade_aa,
+        grade_A: grade_a,
+        grade_B: grade_b,
+        grade_C: grade_c,
+      })) as WeeklyStatistics[];
     },
     enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
@@ -278,6 +285,10 @@ export function useCachedLeaderboard() {
       }
 
       const data: CachedLeaderboardResponse = await response.json();
+      for (const player of data.players) {
+        // Capitalize grade for consistency
+        player.grade = player.grade.toUpperCase();
+      }
       return data;
     },
     enabled: isAuthenticated && !!jwt,

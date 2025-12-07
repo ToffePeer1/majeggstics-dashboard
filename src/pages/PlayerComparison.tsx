@@ -45,23 +45,23 @@ export default function PlayerComparison() {
   if (selectedPlayers.length === 0) {
     return (
       <div className="container">
-        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>⚖️ Player Comparisons</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
         <p style={{ marginBottom: '1.5rem' }}>
           Compare multiple players side-by-side to see how they stack up against each other.
           Select up to 5 players to compare their progression and statistics.
         </p>
         <div className="card">
-          <p style={{ marginBottom: '1rem' }}>👥 Select players to compare (up to 5):</p>
+          <p style={{ marginBottom: '1rem' }}>Select players to compare (up to 5):</p>
           <PlayerSearch players={playerList} onSelect={handleAddPlayer} />
           <div className="info-message" style={{ marginTop: '1rem' }}>
-            👆 Select at least 2 players to start comparing
+            Select at least 2 players to start comparing
           </div>
         </div>
         
         {/* Instructions */}
         <details style={{ marginTop: '2rem' }}>
           <summary style={{ cursor: 'pointer', fontWeight: '600', fontSize: '1.125rem' }}>
-            ℹ️ How to use this page
+            How to use this page
           </summary>
           <div className="card" style={{ marginTop: '1rem' }}>
             <h3>How to Compare Players</h3>
@@ -103,7 +103,7 @@ export default function PlayerComparison() {
   if (!comparisonData || Object.keys(comparisonData).length === 0) {
     return (
       <div className="container">
-        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>⚖️ Player Comparison</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
         <ErrorMessage
           title="No Data Found"
           message="No snapshot data found for selected players."
@@ -127,7 +127,7 @@ export default function PlayerComparison() {
   if (latestSnapshots.length === 0) {
     return (
       <div className="container">
-        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>⚖️ Player Comparison</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
         <ErrorMessage
           title="No Data Found"
           message="No valid snapshot data found for selected players."
@@ -236,7 +236,7 @@ export default function PlayerComparison() {
 
   return (
     <div className="container">
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>⚖️ Player Comparisons</h1>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -272,7 +272,7 @@ export default function PlayerComparison() {
       )}
 
       {/* Current Stats Comparison */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📊 Current Stats Comparison</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Current Stats Comparison</h2>
       <div className="card" style={{ overflowX: 'auto', marginBottom: '2rem' }}>
         <table>
           <thead>
@@ -339,7 +339,7 @@ export default function PlayerComparison() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Progression Comparison */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📈 Progression Comparison</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Progression Comparison</h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
@@ -370,7 +370,7 @@ export default function PlayerComparison() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Relative Growth */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📈 Relative Growth - {metricOptions[selectedMetric]}</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Relative Growth - {metricOptions[selectedMetric]}</h2>
       {growthData.length > 0 ? (
         <div className="card" style={{ overflowX: 'auto', marginBottom: '2rem' }}>
           <table>
@@ -408,8 +408,8 @@ export default function PlayerComparison() {
 
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
-      {/* Detailed Comparison - Player Tabs */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📊 Detailed Comparison</h2>
+      {/* Player Tabs */}
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Player Tabs</h2>
       
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -485,36 +485,6 @@ export default function PlayerComparison() {
       )}
 
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
-
-      {/* Export */}
-      <p style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
-        Download comparison data if you feel you need it. (why?)
-      </p>
-      <button
-        onClick={() => {
-          const combinedData: PlayerSnapshot[] = [];
-          Object.entries(comparisonData).forEach(([discordId, snapshots]) => {
-            snapshots.forEach(s => combinedData.push({ ...s, discord_id: discordId }));
-          });
-          
-          if (combinedData.length === 0) return;
-          
-          const headers = Object.keys(combinedData[0]).join(',');
-          const rows = combinedData.map(row => Object.values(row).join(','));
-          const csv = [headers, ...rows].join('\n');
-          
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'player_comparison.csv';
-          a.click();
-          URL.revokeObjectURL(url);
-        }}
-        className="button button-primary"
-      >
-        📥 Generate Comparison Report
-      </button>
     </div>
   );
 }
