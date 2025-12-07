@@ -144,9 +144,16 @@ export default function ProgressionChart({
               ticktext: ticktext,
             } : {}),
           },
+          legend: {
+            orientation: 'h',
+            yanchor: 'top',
+            y: -0.2,
+            xanchor: 'center',
+            x: 0.5,
+          },
           hovermode: 'x unified',
           height: 500,
-          margin: { l: 80, r: 40, t: 60, b: 60 },
+          margin: { l: 80, r: 40, t: 60, b: 80 },
           plot_bgcolor: '#f6f6f7',
           paper_bgcolor: '#ffffff',
         }}
@@ -160,7 +167,7 @@ export default function ProgressionChart({
       />
       {shouldShowNote && (
         <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
-          <strong>📋 Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
         </p>
       )}
     </>

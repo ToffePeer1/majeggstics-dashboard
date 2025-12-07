@@ -48,7 +48,7 @@ export default function MyStats() {
         <div className="warning-message">
           <h3>😔 No statistics found for your account</h3>
           <p>Your data may not have been collected yet.</p>
-          <p>Please check back after the next weekly snapshot, or contact an administrator.</p>
+          <p>Please check back after the next weekly snapshot, or contact @toffepeer1.</p>
         </div>
       </div>
     );
@@ -137,7 +137,7 @@ export default function MyStats() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Progression Chart with Metric Selector */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📈 Progression Analysis</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Progression Analysis</h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
@@ -166,7 +166,7 @@ export default function MyStats() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Historical Snapshots */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📜 Historical Snapshots</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Historical Snapshots</h2>
         <div className="card" style={{ overflowX: 'auto' }}>
           <table>
             <thead>

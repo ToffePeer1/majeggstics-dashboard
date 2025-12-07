@@ -69,9 +69,9 @@ export default function GradeDistributionChart({
         legend: {
           orientation: 'h',
           yanchor: 'bottom',
-          y: 1.02,
-          xanchor: 'right',
-          x: 1,
+          y: -0.5,
+          xanchor: 'center',
+          x: 0.5,
         },
       }}
       config={{

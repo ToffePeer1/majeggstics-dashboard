@@ -157,7 +157,7 @@ export default function PlayerProfile() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Progression Chart with Metric Selector */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📈 Progression Analysis</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Progression Analysis</h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
@@ -186,7 +186,7 @@ export default function PlayerProfile() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', marginTop: '2rem' }}>
-        📈 Total Gains ({snapshots.length} snapshots)
+        Total Gains ({snapshots.length} snapshots)
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div className="metric-card">
@@ -212,7 +212,7 @@ export default function PlayerProfile() {
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Historical Snapshots */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📜 Historical Snapshots</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Historical Snapshots</h2>
       <div className="card" style={{ overflowX: 'auto' }}>
         <table>
           <thead>

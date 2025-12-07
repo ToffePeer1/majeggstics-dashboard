@@ -123,7 +123,7 @@ export default function AuthCallback() {
           {!isAccessDenied && (
             <details style={{ marginTop: '2rem', textAlign: 'left' }}>
               <summary style={{ cursor: 'pointer', fontWeight: '500' }}>
-                🔍 Troubleshooting
+                Troubleshooting
               </summary>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '1rem' }}>
                 <p>If you're having trouble logging in:</p>
@@ -156,7 +156,7 @@ export default function AuthCallback() {
         <div className="loading-container">
           <div className="spinner"></div>
         </div>
-        <h2 style={{ marginTop: '1rem' }}>🔐 Authenticating...</h2>
+        <h2 style={{ marginTop: '1rem' }}>Authenticating...</h2>
         <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
           Securely verifying your Discord identity.
         </p>

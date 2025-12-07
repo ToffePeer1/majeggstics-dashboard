@@ -196,7 +196,7 @@ export default function MultiLineChart({
       />
       {shouldShowNote && (
         <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
-          <strong>📋 Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
         </p>
       )}
     </>

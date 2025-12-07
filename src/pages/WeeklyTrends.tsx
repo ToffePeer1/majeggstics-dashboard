@@ -176,7 +176,7 @@ export default function WeeklyTrends() {
       {/* Player Count Over Time */}
       {showPlayerCount && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>👥 Active Players Over Time</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Active Players Over Time</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             <ProgressionChart
               data={playerCountData}
@@ -212,7 +212,7 @@ export default function WeeklyTrends() {
       {/* Grade Distribution Over Time */}
       {showGradeDist && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>🎖️ Grade Distribution Over Time</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Grade Distribution Over Time</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             <GradeDistributionChart
               data={gradeDistData}
@@ -245,7 +245,7 @@ export default function WeeklyTrends() {
       {/* Community Statistics Trends */}
       {showCommunityStats && (
         <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>📊 Community Statistics Trends</h2>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Community Statistics Trends</h2>
           <div className="card" style={{ marginBottom: '2rem' }}>
             {/* Selectors */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>

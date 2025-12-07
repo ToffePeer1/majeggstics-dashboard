@@ -114,7 +114,7 @@ export default function Leaderboards() {
 
   return (
     <div className="container">
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>🏆 Current Leaderboards</h1>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Current Leaderboards</h1>
 
       <div className="info-message" style={{ marginBottom: '1.5rem' }}>
         Last updated: <strong>{lastUpdated}</strong>
