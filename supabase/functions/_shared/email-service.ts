@@ -28,8 +28,8 @@ export async function sendEmail(
       },
       body: JSON.stringify({
         from: emailData.type === 'week_no_update' || emailData.type === 'sync_failed'
-          ? 'Majeggstics Alerts <alerts@updates.resend.dev>' // Use Resend's sandbox for alerts
-          : 'Majeggstics Dashboard <notifications@updates.resend.dev>',
+          ? 'Majeggstics Alerts <onboarding@resend.dev>' // Use Resend's pre-verified onboarding domain
+          : 'Majeggstics Dashboard <onboarding@resend.dev>',
         to: emailData.recipient,
         subject: emailData.subject,
         text: emailData.bodyText,
