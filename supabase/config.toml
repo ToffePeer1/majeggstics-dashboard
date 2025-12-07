@@ -5,3 +5,20 @@
 # Disable JWT verification for this function since it's a login endpoint
 # Users don't have a JWT yet when they're trying to authenticate!
 verify_jwt = false
+
+[functions.refresh-leaderboard-cron]
+# Cron job function - requires JWT authentication
+# Called every 15 minutes by pg_cron with service role token
+verify_jwt = false  # We manually verify in the function code
+
+[functions.update-player-data]
+# Data update function - can be called externally (with secret token) or internally
+verify_jwt = false
+
+[functions.get-leaderboard]
+# Leaderboard endpoint - requires JWT for user access control
+verify_jwt = false  # We manually verify in the function code
+
+[functions.delete-snapshot]
+# Snapshot deletion - requires secret token
+verify_jwt = false
