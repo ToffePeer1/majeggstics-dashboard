@@ -118,11 +118,11 @@ export interface AggregateStats {
 
 export interface GradeDistribution {
   snapshot_date: string;
-  aaa: number;
-  aa: number;
-  a: number;
-  b: number;
-  c: number;
+  AAA: number;
+  AA: number;
+  A: number;
+  B: number;
+  C: number;
 }
 
 export interface ComparisonData {
@@ -143,11 +143,11 @@ export interface WeeklyStatistics {
   player_count: number;
   active_player_count: number;
   guest_count: number;
-  grade_aaa: number;
-  grade_aa: number;
-  grade_a: number;
-  grade_b: number;
-  grade_c: number;
+  grade_AAA: number;
+  grade_AA: number;
+  grade_A: number;
+  grade_B: number;
+  grade_C: number;
   avg_eb: number;
   median_eb: number;
   max_eb: number;

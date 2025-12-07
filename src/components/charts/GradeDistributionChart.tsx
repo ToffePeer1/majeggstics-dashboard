@@ -3,11 +3,11 @@ import Plot from 'react-plotly.js';
 interface GradeDistributionChartProps {
   data: Array<{
     snapshot_date: string;
-    aaa: number;
-    aa: number;
-    a: number;
-    b: number;
-    c: number;
+    AAA: number;
+    AA: number;
+    A: number;
+    B: number;
+    C: number;
   }>;
   title?: string;
 }
@@ -25,14 +25,14 @@ export default function GradeDistributionChart({
   }
 
   const gradeColors = {
-    aaa: '#df4e56',
-    aa: '#efa345',
-    a: '#9a08d5',
-    b: '#3f88c7',
-    c: '#b8b8b8',
+    AAA: '#df4e56',
+    AA: '#efa345',
+    A: '#9a08d5',
+    B: '#3f88c7',
+    C: '#b8b8b8',
   };
 
-  const grades = ['aaa', 'aa', 'a', 'b', 'c'] as const;
+  const grades = ['AAA', 'AA', 'A', 'B', 'C'] as const;
 
   const traces = grades.map(grade => ({
     x: data.map(d => d.snapshot_date),
