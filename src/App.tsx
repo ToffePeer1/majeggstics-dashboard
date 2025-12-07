@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import Login from '@/pages/Login';
 import AuthCallback from '@/pages/AuthCallback';
-import PlayerProfile from '@/pages/PlayerProfile';
+import PlayerLookup from '@/pages/PlayerLookup';
 import Leaderboards from '@/pages/Leaderboards';
 import WeeklyTrends from '@/pages/WeeklyTrends';
 import PlayerComparison from '@/pages/PlayerComparison';
@@ -54,10 +54,10 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/player-profile"
+          path="/player-lookup"
           element={
             <ProtectedRoute adminOnly>
-              <PlayerProfile />
+              <PlayerLookup />
             </ProtectedRoute>
           }
         />
@@ -72,7 +72,7 @@ function AppRoutes() {
         <Route
           path="/weekly-trends"
           element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute>
               <WeeklyTrends />
             </ProtectedRoute>
           }

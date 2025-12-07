@@ -7,7 +7,7 @@ import { ProgressionChart } from '@/components/charts';
 import { formatInteger, bigNumberToString } from '@/utils/formatters';
 import { getLatestRecord } from '@/utils/dataProcessing';
 
-export default function PlayerProfile() {
+export default function PlayerLookup() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState('eb');
   const { data: playerList, isLoading: listLoading } = usePlayerList();
@@ -33,7 +33,7 @@ export default function PlayerProfile() {
   if (!selectedPlayer) {
     return (
       <div className="container">
-        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Profile</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Lookup</h1>
         <div className="card">
           <p style={{ marginBottom: '1rem' }}>Select a player to view their detailed profile and statistics:</p>
           <PlayerSearch players={playerList} onSelect={handlePlayerSelect} />
@@ -43,7 +43,7 @@ export default function PlayerProfile() {
   }
 
   if (snapshotsLoading) {
-    return <LoadingSpinner text="Loading player profile..." />;
+    return <LoadingSpinner text="Loading player lookup..." />;
   }
 
   if (error) {
@@ -59,7 +59,7 @@ export default function PlayerProfile() {
   if (!snapshots || snapshots.length === 0) {
     return (
       <div className="container">
-        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Profile</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Lookup</h1>
         <PlayerSearch players={playerList} onSelect={handlePlayerSelect} />
         <ErrorMessage
           title="No Data Found"
@@ -123,7 +123,7 @@ export default function PlayerProfile() {
 
   return (
     <div className="container">
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Profile</h1>
+      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Lookup</h1>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
         <PlayerSearch players={playerList} onSelect={handlePlayerSelect} />

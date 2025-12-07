@@ -105,8 +105,11 @@ export default function Layout() {
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {isAdmin() ? (
               <>
-                <NavLink to="/player-profile">
-                  Player Profile
+                <NavLink to="/my-stats">
+                  My Stats
+                </NavLink>
+                <NavLink to="/player-lookup">
+                  Player Lookup
                 </NavLink>
                 <NavLink to="/leaderboards">
                   Leaderboards
@@ -117,9 +120,6 @@ export default function Layout() {
                 <NavLink to="/player-comparison">
                   Player Comparison
                 </NavLink>
-                <NavLink to="/my-stats">
-                  My Stats
-                </NavLink>
               </>
             ) : (
               <>
@@ -128,6 +128,9 @@ export default function Layout() {
                 </NavLink>
                 <NavLink to="/leaderboards">
                   Leaderboards
+                </NavLink>
+                <NavLink to="/weekly-trends">
+                  Weekly Trends
                 </NavLink>
                 <div className="info-message" style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
                   ℹ️ Admin users have access to additional analytics pages.
@@ -147,7 +150,7 @@ export default function Layout() {
                 <br />
                 <strong>Features:</strong>
                 <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
-                  <li>Player profiles with historical data</li>
+                  <li>Player lookup with historical data</li>
                   <li>Leaderboards and rankings</li>
                   <li>Community trends over time</li>
                   <li>Multi-player comparisons</li>
