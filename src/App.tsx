@@ -48,8 +48,8 @@ function AppRoutes() {
         <Route
           path="/"
           element={
-            <ProtectedRoute adminOnly>
-              <Navigate to="/player-profile" replace />
+            <ProtectedRoute>
+              <Navigate to="/my-stats" replace />
             </ProtectedRoute>
           }
         />
