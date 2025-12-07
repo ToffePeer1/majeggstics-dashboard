@@ -362,7 +362,7 @@ Deno.serve(async (req)=>{
           response.emailError = emailError instanceof Error ? emailError.message : String(emailError);
         }
       } else {
-        console.log('Email not sent: missing RESEND_API_KEY or NOTIFICATION_EMAIL');
+        console.warn('Email not sent: missing RESEND_API_KEY or NOTIFICATION_EMAIL');
       }
     }
     
