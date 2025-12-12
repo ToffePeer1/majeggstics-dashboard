@@ -303,3 +303,63 @@ export function useCachedLeaderboard() {
     refetchInterval: 5 * 60 * 1000,
   });
 }
+
+/**
+ * My Current Stats Response from Edge Function
+ */
+export interface MyCurrentStatsResponse {
+  player: CachedLeaderboardResponse['players'][number] | null;
+  lastUpdated: string;
+  fromCache: boolean;
+}
+
+/**
+ * Fetch the authenticated user's current stats from the leaderboard cache
+ * 
+ * This hook fetches the user's current/live stats:
+ * - Data comes from leaderboard_cache (refreshed every 15 minutes)
+ * - Single player query (efficient - no pagination needed)
+ * - Returns null if user not in cache yet
+ * 
+ * The Edge Function handles:
+ * - JWT validation and discord_id extraction
+ * - Access level filtering (non-admins don't see num_prestiges)
+ */
+export function useMyCurrentStats() {
+  const { isAuthenticated, jwt } = useAuth();
+
+  return useQuery({
+    queryKey: ['myCurrentStats', jwt],
+    queryFn: async () => {
+      if (!jwt) throw new Error('Not authenticated');
+
+      const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_MY_CURRENT_STATS}`;
+      
+      const response = await fetch(edgeFunctionUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch current stats: ${response.status}`);
+      }
+
+      const data: MyCurrentStatsResponse = await response.json();
+      
+      // Capitalize grade for consistency if player exists
+      if (data.player && data.player.grade) {
+        data.player.grade = data.player.grade.toUpperCase();
+      }
+      
+      return data;
+    },
+    enabled: isAuthenticated && !!jwt,
+    staleTime: CACHE_TTL.LATEST_SNAPSHOT,
+    // Refetch every 10 minutes to check for updates
+    refetchInterval: 10 * 60 * 1000,
+  });
+}

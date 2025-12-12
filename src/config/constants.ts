@@ -70,6 +70,7 @@ export const DISCORD_CONFIG = {
 export const EDGE_FUNCTIONS = {
   DISCORD_AUTH: '/functions/v1/discord-auth',
   GET_LEADERBOARD: '/functions/v1/get-leaderboard',
+  GET_MY_CURRENT_STATS: '/functions/v1/get-my-current-stats',
 } as const;
 
 // Grade colors for charts
