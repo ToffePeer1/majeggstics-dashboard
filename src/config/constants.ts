@@ -1,6 +1,6 @@
 // Configuration constants for the application
 
-export const PAGE_TITLE = 'Maj Statistics Analytics';
+export const PAGE_TITLE = 'Majeggstics Dashboard';
 
 // Database table names
 export const TABLE_PLAYER_SNAPSHOTS = 'player_snapshots';

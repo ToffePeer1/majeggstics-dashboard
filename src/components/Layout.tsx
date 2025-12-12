@@ -145,7 +145,7 @@ export default function Layout() {
                 ℹ️ About
               </summary>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-                <h4>Maj Statistics Analytics</h4>
+                <h4>Majeggstics Dashboard</h4>
                 <p>Track and analyze player progression, compare performance, and view community trends.</p>
                 <br />
                 <strong>Features:</strong>
