@@ -35,7 +35,12 @@ export function usePlayerSnapshots(discordId: string | null) {
         .order('snapshot_date', { ascending: false });
       
       if (error) throw error;
-      return (data || []) as PlayerSnapshot[];
+      const result = (data || []) as PlayerSnapshot[];
+      result.forEach((snapshot) => {
+        // Capitalize grade for consistency
+        snapshot.grade = snapshot.grade.toUpperCase();
+      });
+      return result;
     },
     // Only run when authenticated and discordId is provided
     enabled: isAuthenticated && !!discordId,
@@ -156,7 +161,12 @@ export function useAllPlayerSnapshots() {
         .order('snapshot_date', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as PlayerSnapshot[];
+      const result = (data || []) as PlayerSnapshot[];
+      result.forEach((snapshot) => {
+        // Capitalize grade for consistency
+        snapshot.grade = snapshot.grade.toUpperCase();
+      });
+      return result;
     },
     enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
@@ -187,6 +197,12 @@ export function usePlayerComparison(discordIds: string[]) {
         if (error) throw error;
         results[discordId] = (data || []) as PlayerSnapshot[];
       }
+      Object.values(results).forEach((snapshots) => {
+        // Capitalize grade for consistency
+        snapshots.forEach((snapshot) => {
+          snapshot.grade = snapshot.grade.toUpperCase();
+        });
+      });
 
       return results;
     },

@@ -6,6 +6,7 @@ import PlayerSearch from '@/components/PlayerSearch';
 import { ProgressionChart } from '@/components/charts';
 import { formatInteger, bigNumberToString } from '@/utils/formatters';
 import { getLatestRecord } from '@/utils/dataProcessing';
+import { CSV_EXPORT_HEADERS } from '@/config/constants';
 
 export default function PlayerLookup() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -249,13 +250,16 @@ export default function PlayerLookup() {
       <div style={{ marginTop: '2rem' }}>
         <button
           onClick={() => {
-            const csv = [
-              ['Date', 'EB', 'SE', 'PE', 'Prestiges', 'Role'].join(','),
-              ...snapshots.map(s => 
-                [s.snapshot_date, s.eb, s.se, s.pe, s.num_prestiges, s.farmer_role].join(',')
-              )
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const csv = [[...CSV_EXPORT_HEADERS].join(',')];
+            snapshots.forEach(snapshot => {
+              const row = CSV_EXPORT_HEADERS.map(header => {
+                const value = snapshot[header];
+                return value != null ? `"${value}"` : '""';
+              });
+              csv.push(row.join(','));
+            });
+            const csvString = csv.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

@@ -21,6 +21,21 @@ export const NUMERIC_COLUMNS = {
   num_prestiges: 'Number of Prestiges',
 } as const;
 
+// CSV Export Headers - Used for exporting player snapshot data
+export const CSV_EXPORT_HEADERS = [
+  'snapshot_date',
+  'eb',
+  'se',
+  'pe',
+  'te',
+  'num_prestiges',
+  'farmer_role',
+  'grade',
+  'active'
+] as const;
+
+export type CsvExportHeader = typeof CSV_EXPORT_HEADERS[number];
+
 // Cache TTLs (in milliseconds)
 export const CACHE_TTL = {
   PLAYER_LIST: 3_600_000, // 1 hour

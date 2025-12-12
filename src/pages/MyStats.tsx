@@ -6,6 +6,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { ProgressionChart } from '@/components/charts';
 import { getLatestRecord } from '@/utils/dataProcessing';
 import { bigNumberToString, formatInteger } from '@/utils/formatters';
+import { CSV_EXPORT_HEADERS } from '@/config/constants';
 
 /**
  * My Stats Page
@@ -203,11 +204,16 @@ export default function MyStats() {
       <div style={{ marginTop: '2rem' }}>
         <button
           onClick={() => {
-            const csv = [
-              Object.keys(snapshots[0]).join(','),
-              ...snapshots.map(s => Object.values(s).join(','))
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const csv = [[...CSV_EXPORT_HEADERS].join(',')];
+            snapshots.forEach(snapshot => {
+              const row = CSV_EXPORT_HEADERS.map(header => {
+                const value = snapshot[header];
+                return value != null ? `"${value}"` : '""';
+              });
+              csv.push(row.join(','));
+            });
+            const csvString = csv.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
