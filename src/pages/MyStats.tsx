@@ -114,8 +114,8 @@ export default function MyStats() {
         <p>Total snapshots tracked: <strong>{snapshots.length}</strong></p>
       </div>
 
-      {/* Current Statistics as Table */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Current Statistics</h2>
+      {/* Latest Statistics as Table */}
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Latest Statistics ({new Date(latest.snapshot_date).toLocaleDateString()})</h2>
       <div className="card" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
         <table>
           <thead>
