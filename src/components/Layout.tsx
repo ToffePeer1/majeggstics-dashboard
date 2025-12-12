@@ -173,14 +173,14 @@ export default function Layout() {
               </summary>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
                 <h4>Majeggstics Dashboard</h4>
-                <p>Track and analyze player progression, compare performance, and view community trends.</p>
+                <p>A place to see your historical player data, live leaderboards from Wonky data and weekly trends.</p>
+                <p>Your historical data dates back to October 2023, or since when you joined Maj</p>
                 <br />
                 <strong>Features:</strong>
                 <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
-                  <li>Player lookup with historical data</li>
+                  <li>Your historical data</li>
                   <li>Leaderboards and rankings</li>
                   <li>Community trends over time</li>
-                  <li>Multi-player comparisons</li>
                 </ul>
               </div>
             </details>
