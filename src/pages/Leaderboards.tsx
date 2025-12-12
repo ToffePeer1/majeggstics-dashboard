@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { formatInteger, bigNumberToString, formatLastUpdated } from '@/utils/formatters';
+import { RoleDistributionChart } from '@/components/charts';
 
 export default function Leaderboards() {
   const { discordId, accessLevel } = useAuth();
@@ -156,6 +157,16 @@ export default function Leaderboards() {
         </div>
       </div>
 
+      {/* Role Distribution Chart */}
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <h2 style={{ marginBottom: '1rem' }}>Role Distribution</h2>
+        <RoleDistributionChart 
+          data={roleDistribution} 
+          title="Current Role Distribution"
+        />
+      </div>
+
+      {/* Options */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <h3 style={{ marginBottom: '1rem' }}>Options</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -181,6 +192,7 @@ export default function Leaderboards() {
         </div>
       </div>
 
+      {/* Leaderboard */}
       <div className="card" style={{ overflowX: 'auto' }}>
         <h2 style={{ marginBottom: '1rem' }}>Players by {sortOptions[sortBy]}</h2>
         <table>
