@@ -155,6 +155,7 @@ USING ((auth.jwt() ->> 'access_level') = 'admin')
 npm run lint
 npm run typecheck
 ```
+**RUN BOTH COMMANDS.**
 
 If either command reports errors or warnings, you **must resolve them before considering the task complete**. This includes:
 - Fixing ESLint violations (formatting, unused imports, etc.)
