@@ -97,7 +97,6 @@ export default function Login() {
             <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
               <li>We only request "identify" and "guilds.members.read" scopes</li>
               <li>Authentication tokens are cryptographically signed</li>
-              <li>Row Level Security ensures you only see authorized data</li>
               <li>You can revoke access anytime from Discord's Authorized Apps settings</li>
             </ul>
 
