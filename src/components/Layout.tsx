@@ -204,7 +204,7 @@ export default function Layout() {
           fontSize: '0.875rem',
         }}
       >
-        Built with React & TypeScript | Data from Supabase
+        Built with React & TypeScript, by @toffepeer1 | Data from Wonky, stored in Supabase
       </footer>
     </div>
   );
