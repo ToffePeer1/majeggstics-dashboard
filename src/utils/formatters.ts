@@ -36,11 +36,15 @@ const LETTERS: Record<number, string> = {
 };
 
 export function bigNumberToString(
-  number: number,
+  number: number | null | undefined,
   decimals: number = 3,
   strLen?: number,
   trimZeros: boolean = false
 ): string {
+  if (number === null || number === undefined) {
+    return 'N/A';
+  }
+
   if (isNaN(number)) {
     return 'NaN';
   }

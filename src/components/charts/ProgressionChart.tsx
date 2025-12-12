@@ -2,7 +2,7 @@ import Plot from 'react-plotly.js';
 import { bigNumberToString } from '@/utils/formatters';
 
 interface ProgressionChartProps {
-  data: Array<{ snapshot_date: string; value: number }>;
+  data: Array<{ snapshot_date: string; value: number | null }>;
   title: string;
   yAxisTitle: string;
   useLogScale?: boolean;
@@ -13,8 +13,8 @@ interface ProgressionChartProps {
   showDataLossNote?: boolean; // Whether to show data loss note for prestiges
 }
 
-function generateTickValues(data: Array<{ value: number }>, useLogScale: boolean): number[] | null {
-  const values = data.map(d => d.value).filter(v => v != null && !isNaN(v));
+function generateTickValues(data: Array<{ value: number | null }>, useLogScale: boolean): number[] | null {
+  const values = data.map(d => d.value).filter((v): v is number => v != null && !isNaN(v));
   if (values.length === 0) return null;
   
   const yMin = Math.min(...values);
@@ -79,14 +79,23 @@ export default function ProgressionChart({
   const tickvals = formatYAxis ? generateTickValues(data, useLogScale) : null;
   const ticktext = tickvals ? tickvals.map(v => formatTickLabel(v, detectIsEb, detectIsInteger)) : undefined;
 
-  // Split data into segments where gaps > 3 weeks don't connect
+  // Split data into segments where gaps > 3 weeks don't connect or where values are null
   const GAP_THRESHOLD_MS = 3 * 7 * 24 * 60 * 60 * 1000; // 3 weeks in milliseconds
   const segments: Array<Array<{ snapshot_date: string; value: number }>> = [];
   let currentSegment: Array<{ snapshot_date: string; value: number }> = [];
 
   for (let i = 0; i < data.length; i++) {
+    // Skip null values - they create gaps in the chart
+    if (data[i].value === null) {
+      if (currentSegment.length > 0) {
+        segments.push(currentSegment);
+        currentSegment = [];
+      }
+      continue;
+    }
+
     if (currentSegment.length === 0) {
-      currentSegment.push(data[i]);
+      currentSegment.push(data[i] as { snapshot_date: string; value: number });
     } else {
       const prevDate = new Date(currentSegment[currentSegment.length - 1].snapshot_date).getTime();
       const currDate = new Date(data[i].snapshot_date).getTime();
@@ -95,9 +104,9 @@ export default function ProgressionChart({
       if (gap > GAP_THRESHOLD_MS) {
         // Gap too large, start a new segment
         segments.push(currentSegment);
-        currentSegment = [data[i]];
+        currentSegment = [data[i] as { snapshot_date: string; value: number }];
       } else {
-        currentSegment.push(data[i]);
+        currentSegment.push(data[i] as { snapshot_date: string; value: number });
       }
     }
   }
@@ -117,7 +126,7 @@ export default function ProgressionChart({
       line: { color: '#5865f2' },
       marker: { size: 6 },
       customdata: hoverText,
-      hovertemplate: '%{x}<br>%{customdata}<extra></extra>',
+      hovertemplate: '%{customdata}<extra></extra>',
       showlegend: idx === 0, // Only show legend for first segment
     };
   });

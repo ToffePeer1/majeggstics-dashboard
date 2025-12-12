@@ -48,9 +48,6 @@ function formatMetricValue(value: number | null | undefined, metric: MetricKey):
 export default function WeeklyTrends() {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const [selectedAggregate, setSelectedAggregate] = useState<AggregateKey>('avg');
-  const [showPlayerCount, setShowPlayerCount] = useState(true);
-  const [showGradeDist, setShowGradeDist] = useState(true);
-  const [showCommunityStats, setShowCommunityStats] = useState(true);
   
   const { data: stats, isLoading, error, refetch } = useWeeklyStatistics();
 
@@ -111,8 +108,8 @@ export default function WeeklyTrends() {
   // Prepare community stats chart data
   const columnName = getColumnName(selectedMetric, selectedAggregate);
   const communityStatsData = stats.map(s => ({
-    snapshot_date: s.snapshot_date,
-    value: Number(s[columnName]) || 0,
+  snapshot_date: s.snapshot_date,
+  value: s[columnName] !== null ? Number(s[columnName]) : null,
   }));
   
   const latestMetricValue = latestStats[columnName] as number;
@@ -121,37 +118,6 @@ export default function WeeklyTrends() {
   return (
     <div className="container">
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Community Weekly Trends</h1>
-
-      {/* View Options */}
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3 style={{ marginBottom: '1rem' }}>View Options</h3>
-        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showPlayerCount}
-              onChange={(e) => setShowPlayerCount(e.target.checked)}
-            />
-            Player Count
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showGradeDist}
-              onChange={(e) => setShowGradeDist(e.target.checked)}
-            />
-            Grade Distribution
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showCommunityStats}
-              onChange={(e) => setShowCommunityStats(e.target.checked)}
-            />
-            Community Stats
-          </label>
-        </div>
-      </div>
 
       {/* Summary Metrics */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
@@ -174,135 +140,123 @@ export default function WeeklyTrends() {
       </div>
 
       {/* Player Count Over Time */}
-      {showPlayerCount && (
-        <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Active Players Over Time</h2>
-          <div className="card" style={{ marginBottom: '2rem' }}>
-            <ProgressionChart
-              data={playerCountData}
-              title="Player Count Over Time"
-              yAxisTitle="Number of Players"
-              useLogScale={false}
-              showMarkers={true}
-            />
-            
-            {stats.length >= 2 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
-                <div className="metric-card">
-                  <div className="metric-label">Player Growth</div>
-                  <div className="metric-value" style={{ color: playerGrowth >= 0 ? '#4ade80' : '#f87171' }}>
-                    {playerGrowth >= 0 ? '+' : ''}{formatInteger(playerGrowth)}
-                    <span style={{ fontSize: '0.875rem', marginLeft: '0.5rem' }}>
-                      ({playerGrowthPct}%)
-                    </span>
-                  </div>
-                </div>
-                <div className="metric-card">
-                  <div className="metric-label">Avg Weekly Growth</div>
-                  <div className="metric-value" style={{ color: Number(avgWeeklyGrowth) >= 0 ? '#4ade80' : '#f87171' }}>
-                    {Number(avgWeeklyGrowth) >= 0 ? '+' : ''}{avgWeeklyGrowth}
-                  </div>
-                </div>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Active Players Over Time</h2>
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <ProgressionChart
+          data={playerCountData}
+          title="Player Count Over Time"
+          yAxisTitle="Number of Players"
+          useLogScale={false}
+          showMarkers={true}
+        />
+        
+        {stats.length >= 2 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+            <div className="metric-card">
+              <div className="metric-label">Player Growth</div>
+              <div className="metric-value" style={{ color: playerGrowth >= 0 ? '#4ade80' : '#f87171' }}>
+                {playerGrowth >= 0 ? '+' : ''}{formatInteger(playerGrowth)}
+                <span style={{ fontSize: '0.875rem', marginLeft: '0.5rem' }}>
+                  ({playerGrowthPct}%)
+                </span>
               </div>
-            )}
+            </div>
+            <div className="metric-card">
+              <div className="metric-label">Avg Weekly Growth</div>
+              <div className="metric-value" style={{ color: Number(avgWeeklyGrowth) >= 0 ? '#4ade80' : '#f87171' }}>
+                {Number(avgWeeklyGrowth) >= 0 ? '+' : ''}{avgWeeklyGrowth}
+              </div>
+            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       {/* Grade Distribution Over Time */}
-      {showGradeDist && (
-        <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Grade Distribution Over Time</h2>
-          <div className="card" style={{ marginBottom: '2rem' }}>
-            <GradeDistributionChart
-              data={gradeDistData}
-              title="Grade Distribution Over Time"
-            />
-            
-            {/* Current Grade Distribution Table */}
-            <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>Current Grade Distribution</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Grade</th>
-                    <th>Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>AAA</td><td>{formatInteger(latestStats.grade_AAA)}</td></tr>
-                  <tr><td>AA</td><td>{formatInteger(latestStats.grade_AA)}</td></tr>
-                  <tr><td>A</td><td>{formatInteger(latestStats.grade_A)}</td></tr>
-                  <tr><td>B</td><td>{formatInteger(latestStats.grade_B)}</td></tr>
-                  <tr><td>C</td><td>{formatInteger(latestStats.grade_C)}</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Grade Distribution Over Time</h2>
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <GradeDistributionChart
+          data={gradeDistData}
+          title="Grade Distribution Over Time"
+        />
+        
+        {/* Current Grade Distribution Table */}
+        <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>Current Grade Distribution</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Grade</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>AAA</td><td>{formatInteger(latestStats.grade_AAA)}</td></tr>
+              <tr><td>AA</td><td>{formatInteger(latestStats.grade_AA)}</td></tr>
+              <tr><td>A</td><td>{formatInteger(latestStats.grade_A)}</td></tr>
+              <tr><td>B</td><td>{formatInteger(latestStats.grade_B)}</td></tr>
+              <tr><td>C</td><td>{formatInteger(latestStats.grade_C)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Community Statistics Trends */}
-      {showCommunityStats && (
-        <>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Community Statistics Trends</h2>
-          <div className="card" style={{ marginBottom: '2rem' }}>
-            {/* Selectors */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  Select metric to visualize:
-                </label>
-                <select
-                  value={selectedMetric}
-                  onChange={(e) => setSelectedMetric(e.target.value as MetricKey)}
-                  className="select"
-                  style={{ width: '100%' }}
-                >
-                  {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                  Select aggregate function:
-                </label>
-                <select
-                  value={selectedAggregate}
-                  onChange={(e) => setSelectedAggregate(e.target.value as AggregateKey)}
-                  className="select"
-                  style={{ width: '100%' }}
-                >
-                  {Object.entries(AGGREGATE_OPTIONS).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-              </div>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Community Statistics Trends</h2>
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        {/* Selectors */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Select metric to visualize:
+            </label>
+            <select
+              value={selectedMetric}
+              onChange={(e) => setSelectedMetric(e.target.value as MetricKey)}
+              className="select"
+              style={{ width: '100%' }}
+            >
+              {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Select aggregate function:
+            </label>
+            <select
+              value={selectedAggregate}
+              onChange={(e) => setSelectedAggregate(e.target.value as AggregateKey)}
+              className="select"
+              style={{ width: '100%' }}
+            >
+              {Object.entries(AGGREGATE_OPTIONS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <ProgressionChart
+          data={communityStatsData}
+          title={`${AGGREGATE_OPTIONS[selectedAggregate]} ${METRIC_OPTIONS[selectedMetric]}`}
+          yAxisTitle={METRIC_OPTIONS[selectedMetric]}
+          useLogScale={useLogScale}
+          showMarkers={true}
+        />
+
+        {/* Current Value Metric */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <div className="metric-card" style={{ maxWidth: '300px' }}>
+            <div className="metric-label">
+              Current {AGGREGATE_OPTIONS[selectedAggregate]} {METRIC_OPTIONS[selectedMetric]}
             </div>
-
-            <ProgressionChart
-              data={communityStatsData}
-              title={`${AGGREGATE_OPTIONS[selectedAggregate]} ${METRIC_OPTIONS[selectedMetric]}`}
-              yAxisTitle={METRIC_OPTIONS[selectedMetric]}
-              useLogScale={useLogScale}
-              showMarkers={true}
-            />
-
-            {/* Current Value Metric */}
-            <div style={{ marginTop: '1.5rem' }}>
-              <div className="metric-card" style={{ maxWidth: '300px' }}>
-                <div className="metric-label">
-                  Current {AGGREGATE_OPTIONS[selectedAggregate]} {METRIC_OPTIONS[selectedMetric]}
-                </div>
-                <div className="metric-value" style={{ fontSize: '1.5rem' }}>
-                  {formatMetricValue(latestMetricValue, selectedMetric)}
-                </div>
-              </div>
+            <div className="metric-value" style={{ fontSize: '1.5rem' }}>
+              {formatMetricValue(latestMetricValue, selectedMetric)}
             </div>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
