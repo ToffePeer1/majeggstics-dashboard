@@ -76,6 +76,26 @@ a:hover {
   box-shadow: var(--shadow-sm);
 }
 
+/* Sticky Header */
+.sticky-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.sticky-header.hidden {
+  transform: translateY(-100%);
+}
+
+.sticky-header.visible {
+  transform: translateY(0);
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -282,7 +302,10 @@ tr:hover {
 
 .sidebar-overlay {
   position: fixed;
-  inset: 0;
+  top: 70px; /* Start below sticky header */
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 40;
   opacity: 0;
@@ -358,13 +381,13 @@ tr:hover {
 /* Sidebar behavior - collapsible on all screen sizes */
 .sidebar {
   position: fixed;
-  top: 0;
+  top: 70px; /* Height of sticky header */
   left: 0;
-  height: 100vh;
+  height: calc(100vh - 70px);
   z-index: 50;
   transform: translateX(-100%);
   box-shadow: var(--shadow-lg);
-  padding-top: 4.5rem;
+  padding-top: 1rem;
 }
 
 .sidebar.open {
@@ -407,6 +430,8 @@ tr:hover {
   padding: 2rem;
   min-width: 0;
   overflow-x: auto;
+  /* Add padding for sticky header */
+  padding-top: calc(2rem + 70px);
 }
 
 @media (max-width: 768px) {

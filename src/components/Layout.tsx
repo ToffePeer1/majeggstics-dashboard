@@ -9,6 +9,8 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Close sidebar when route changes (mobile)
   useEffect(() => {
@@ -24,6 +26,30 @@ export default function Layout() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
+  // Handle scroll behavior for header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Show header when scrolling up, hide when scrolling down
+      // But always show when at the top
+      if (currentScrollY < 10) {
+        setHeaderVisible(true);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up
+        setHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down (only hide after scrolling past 100px)
+        setHeaderVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -37,6 +63,7 @@ export default function Layout() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <header
+        className={`sticky-header ${headerVisible ? 'visible' : 'hidden'}`}
         style={{
           background: 'var(--color-bg)',
           borderBottom: '1px solid var(--color-border)',
