@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTICS, VIEW_UNIQUE_PLAYERS_LATEST, CACHE_TTL, ENV, EDGE_FUNCTIONS } from '@/config/constants';
 import type { PlayerSnapshot, SnapshotMetadata, PlayerListItem, WeeklyStatistics } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { preprocessPlayerData } from '@/utils/dataProcessing';
 
 /**
  * Fetch all player snapshots for the current user
@@ -36,11 +37,8 @@ export function usePlayerSnapshots(discordId: string | null) {
       
       if (error) throw error;
       const result = (data || []) as PlayerSnapshot[];
-      result.forEach((snapshot) => {
-        // Capitalize grade for consistency
-        snapshot.grade = snapshot.grade.toUpperCase();
-      });
-      return result;
+      // Preprocess data: normalize grade and fill missing farmer roles
+      return result.map(snapshot => preprocessPlayerData(snapshot));
     },
     // Only run when authenticated and discordId is provided
     enabled: isAuthenticated && !!discordId,
@@ -162,11 +160,8 @@ export function useAllPlayerSnapshots() {
 
       if (error) throw error;
       const result = (data || []) as PlayerSnapshot[];
-      result.forEach((snapshot) => {
-        // Capitalize grade for consistency
-        snapshot.grade = snapshot.grade.toUpperCase();
-      });
-      return result;
+      // Preprocess data: normalize grade and fill missing farmer roles
+      return result.map(snapshot => preprocessPlayerData(snapshot));
     },
     enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
@@ -195,14 +190,9 @@ export function usePlayerComparison(discordIds: string[]) {
           .order('snapshot_date', { ascending: false });
 
         if (error) throw error;
-        results[discordId] = (data || []) as PlayerSnapshot[];
+        // Preprocess data: normalize grade and fill missing farmer roles
+        results[discordId] = ((data || []) as PlayerSnapshot[]).map(snapshot => preprocessPlayerData(snapshot));
       }
-      Object.values(results).forEach((snapshots) => {
-        // Capitalize grade for consistency
-        snapshots.forEach((snapshot) => {
-          snapshot.grade = snapshot.grade.toUpperCase();
-        });
-      });
 
       return results;
     },

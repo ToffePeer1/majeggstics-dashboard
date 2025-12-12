@@ -1,6 +1,29 @@
 // Data processing utilities
-
 import type { PlayerSnapshot, ChartData, GrowthData } from '@/types';
+import { EBtoRole } from '@/utils/eb';
+
+/**
+ * Preprocess player snapshot data:
+ * - Fill in missing farmer roles from EB
+ * - Normalize grade to uppercase
+ */
+export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
+  const processed = { ...snapshot };
+  
+  // Capitalize grade for consistency
+  if (processed.grade) {
+    processed.grade = processed.grade.toUpperCase();
+  }
+  
+  // Fill in missing farmer role from EB
+  if (!processed.farmer_role || processed.farmer_role.trim() === '') {
+    if (processed.eb != null) {
+      processed.farmer_role = EBtoRole(processed.eb);
+    }
+  }
+  
+  return processed;
+}
 
 export function prepareChartData(snapshots: PlayerSnapshot[]): ChartData[] {
   return snapshots

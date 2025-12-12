@@ -1,4 +1,5 @@
 import Plot from 'react-plotly.js';
+import { GRADE_COLORS, GRADES } from '@/config/constants';
 
 interface GradeDistributionChartProps {
   data: Array<{
@@ -24,25 +25,15 @@ export default function GradeDistributionChart({
     );
   }
 
-  const gradeColors = {
-    AAA: '#df4e56',
-    AA: '#efa345',
-    A: '#9a08d5',
-    B: '#3f88c7',
-    C: '#b8b8b8',
-  };
-
-  const grades = ['AAA', 'AA', 'A', 'B', 'C'] as const;
-
-  const traces = grades.map(grade => ({
+  const traces = GRADES.map(grade => ({
     x: data.map(d => d.snapshot_date),
     y: data.map(d => d[grade]),
     type: 'scatter' as const,
     mode: 'lines' as const,
     name: grade.toUpperCase(),
-    line: { width: 0.5, color: gradeColors[grade] },
+    line: { width: 0.5, color: GRADE_COLORS[grade] },
     stackgroup: 'one',
-    fillcolor: gradeColors[grade],
+    fillcolor: GRADE_COLORS[grade],
   }));
 
   return (

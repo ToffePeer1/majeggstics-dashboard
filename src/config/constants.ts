@@ -10,17 +10,6 @@ export const TABLE_WEEKLY_STATISTICS = 'weekly_statistics';
 // Materialized views
 export const VIEW_UNIQUE_PLAYERS_LATEST = 'unique_players_latest';
 
-// Numeric columns
-export const LARGE_NUMERIC_COLUMNS = ['eb', 'se'];
-
-export const NUMERIC_COLUMNS = {
-  eb: 'Earnings Bonus',
-  se: 'Soul Eggs',
-  pe: 'Prophecy Eggs',
-  te: 'Truth Eggs',
-  num_prestiges: 'Number of Prestiges',
-} as const;
-
 // CSV Export Headers - Used for exporting player snapshot data
 export const CSV_EXPORT_HEADERS = [
   'snapshot_date',
@@ -33,8 +22,6 @@ export const CSV_EXPORT_HEADERS = [
   'grade',
   'active'
 ] as const;
-
-export type CsvExportHeader = typeof CSV_EXPORT_HEADERS[number];
 
 // Cache TTLs (in milliseconds)
 export const CACHE_TTL = {
@@ -87,9 +74,11 @@ export const EDGE_FUNCTIONS = {
 
 // Grade colors for charts
 export const GRADE_COLORS = {
-  aaa: '#df4e56',
-  aa: '#efa345',
-  a: '#9a08d5',
-  b: '#3f88c7',
-  c: '#b8b8b8',
+  AAA: '#df4e56',
+  AA: '#efa345',
+  A: '#9a08d5',
+  B: '#3f88c7',
+  C: '#b8b8b8',
 } as const;
+
+export const GRADES = ['AAA', 'AA', 'A', 'B', 'C'] as const;
