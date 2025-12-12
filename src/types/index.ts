@@ -54,6 +54,7 @@ export interface DiscordAuthResponse {
 export interface AuthErrorResponse {
   error: string;
   details?: string;
+  message?: string; // User-facing error message (e.g., for access denied)
 }
 
 /**

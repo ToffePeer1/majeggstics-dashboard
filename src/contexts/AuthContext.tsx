@@ -158,7 +158,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (!response.ok) {
         const errorData: AuthErrorResponse = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Authentication failed');
+        // Check for message field first (used for access denied errors), then details, then error code
+        throw new Error(errorData.message || errorData.details || errorData.error || 'Authentication failed');
       }
 
       const data: DiscordAuthResponse = await response.json();

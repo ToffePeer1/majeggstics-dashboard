@@ -386,7 +386,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           error: 'access_denied',
-          message: 'You must be a member of the Majeggstics Discord server with the MAJ role to access this dashboard.',
+          message: 'You must be a member of the Majeggstics Discord server with the Majeggstics role to access this dashboard.',
         } as ErrorResponse),
         {
           status: 403,
