@@ -46,8 +46,13 @@ jobs:
     name: Deploy to Production
     needs: ci
     runs-on: ubuntu-latest
-    # Only deploy on push to main (not on PRs)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only deploy on push to main (not on PRs) and only if non-supabase files changed
+    if: |
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/main' &&
+      !contains(github.event.head_commit.modified, 'supabase/') && 
+      !contains(github.event.head_commit.added, 'supabase/') &&
+      !contains(github.event.head_commit.removed, 'supabase/')
 
     steps:
       - name: Checkout repository
