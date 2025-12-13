@@ -206,6 +206,76 @@ export default function PlayerLookup() {
         </div>
       )}
 
+      {/* Known Names */}
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Known Names</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {/* Discord Names */}
+        <div className="card" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>Discord Names</h3>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {Array.from(
+              new Set([
+                ...(currentStatsData?.player?.discord_name ? [currentStatsData.player.discord_name] : []),
+              ])
+            )
+              .sort()
+              .map((name, index) => (
+                <li key={name} style={{ padding: '0.5rem 0', borderTop: index > 0 ? '1px solid var(--color-border)' : 'none' }}>
+                  {name}
+                </li>
+              ))}
+          </ul>
+        </div>
+
+        {/* IGN Names */}
+        <div className="card" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>IGN</h3>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {Array.from(
+              new Map(
+                [
+                  ...(currentStatsData?.player?.ign ? [{name: currentStatsData.player.ign, date: new Date().toISOString()}] : []),
+                  ...snapshots
+                    .map(s => ({name: s.ign, date: s.snapshot_date}))
+                    .filter(item => item.name != null && item.name.trim() !== '')
+                ]
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(item => [item.name, item])
+              ).values()
+            )
+              .map((item, index) => (
+                <li key={item.name} style={{ padding: '0.5rem 0', borderTop: index > 0 ? '1px solid var(--color-border)' : 'none' }}>
+                  {item.name}
+                </li>
+              ))}
+          </ul>
+        </div>
+
+        {/* Display Names */}
+        <div className="card" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>Display Names</h3>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {Array.from(
+              new Map(
+                [
+                  ...(currentStatsData?.player?.display_name ? [{name: currentStatsData.player.display_name, date: new Date().toISOString()}] : []),
+                  ...snapshots
+                    .map(s => ({name: s.display_name, date: s.snapshot_date}))
+                    .filter((item): item is {name: string, date: string} => item.name != null && item.name.trim() !== '')
+                ]
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map(item => [item.name, item])
+              ).values()
+            )
+              .map((item, index) => (
+                <li key={item.name} style={{ padding: '0.5rem 0', borderTop: index > 0 ? '1px solid var(--color-border)' : 'none' }}>
+                  {item.name}
+                </li>
+              ))}
+          </ul>
+        </div>
+      </div>
+
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 
       {/* Progression Chart with Metric Selector */}
