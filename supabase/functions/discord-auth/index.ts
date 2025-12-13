@@ -178,25 +178,30 @@ async function fetchGuildMember(
 /**
  * Determine access level based on Discord roles
  * Returns null if user doesn't have required access
+ * User can access if they have either MAJ role or YC role
+ * YC role grants admin access automatically
  */
 function determineAccessLevel(
   member: DiscordGuildMember | null,
-  requiredRoleId: string,
+  majRoleId: string,
+  ycRoleId: string,
   adminRoleId: string
 ): AccessLevel | null {
   if (!member || !member.roles) {
     return null;
   }
 
-  // Check if user has the required MAJ role
-  const hasMajRole = member.roles.includes(requiredRoleId);
-  if (!hasMajRole) {
+  // Check if user has either the MAJ role or the YC (Yellow Car) role
+  const hasMajRole = member.roles.includes(majRoleId);
+  const hasYcRole = member.roles.includes(ycRoleId);
+  
+  if (!hasMajRole && !hasYcRole) {
     return null;
   }
 
-  // Check if user has admin role (Wonky Leader)
+  // YC role grants admin access automatically, or check for admin role (Wonky Leader)
   const hasAdminRole = member.roles.includes(adminRoleId);
-  return hasAdminRole ? 'admin' : 'user';
+  return (hasYcRole || hasAdminRole) ? 'admin' : 'user';
 }
 
 /**
@@ -280,6 +285,7 @@ function validateEnvironment(): {
   supabaseUrl: string;
   guildId: string;
   majRoleId: string;
+  ycRoleId: string;
   adminRoleId: string;
 } {
   const clientId = Deno.env.get('DISCORD_CLIENT_ID');
@@ -288,6 +294,7 @@ function validateEnvironment(): {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const guildId = Deno.env.get('EGGINC_GUILD');
   const majRoleId = Deno.env.get('EGGINC_MAJ_ROLE');
+  const ycRoleId = Deno.env.get('EGGINC_YC_ROLE');
   const adminRoleId = Deno.env.get('EGGINC_WONKY_LEADER_ROLE');
 
   if (!clientId) {
@@ -308,11 +315,14 @@ function validateEnvironment(): {
   if (!majRoleId) {
     throw new Error('Missing EGGINC_MAJ_ROLE environment variable');
   }
+  if (!ycRoleId) {
+    throw new Error('Missing EGGINC_YC_ROLE environment variable');
+  }
   if (!adminRoleId) {
     throw new Error('Missing EGGINC_WONKY_LEADER_ROLE environment variable');
   }
 
-  return { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, adminRoleId };
+  return { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId };
 }
 
 serve(async (req: Request) => {
@@ -334,7 +344,7 @@ serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, adminRoleId } = validateEnvironment();
+    const { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId } = validateEnvironment();
 
     // Parse request body
     const body: AuthRequest = await req.json();
@@ -379,7 +389,7 @@ serve(async (req: Request) => {
 
     // Step 3: Check guild membership and roles
     const guildMember = await fetchGuildMember(tokenResponse.access_token, guildId);
-    const accessLevel = determineAccessLevel(guildMember, majRoleId, adminRoleId);
+    const accessLevel = determineAccessLevel(guildMember, majRoleId, ycRoleId, adminRoleId);
 
     if (!accessLevel) {
       console.log('User does not have required access:', discordUser.id);
