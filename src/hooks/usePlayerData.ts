@@ -305,35 +305,44 @@ export function useCachedLeaderboard() {
 }
 
 /**
- * My Current Stats Response from Edge Function
+ * Player Current Stats Response from Edge Function
  */
-export interface MyCurrentStatsResponse {
+export interface PlayerCurrentStatsResponse {
   player: CachedLeaderboardResponse['players'][number] | null;
   lastUpdated: string;
   fromCache: boolean;
 }
 
 /**
- * Fetch the authenticated user's current stats from the leaderboard cache
+ * Fetch a player's current stats from the leaderboard cache
  * 
- * This hook fetches the user's current/live stats:
+ * This hook fetches current/live stats for a specific player:
  * - Data comes from leaderboard_cache (refreshed every 15 minutes)
  * - Single player query (efficient - no pagination needed)
- * - Returns null if user not in cache yet
+ * - Returns null if player not in cache yet
+ * 
+ * @param discordId - Discord ID of player to fetch (optional - uses JWT user if not provided)
  * 
  * The Edge Function handles:
- * - JWT validation and discord_id extraction
+ * - JWT validation
+ * - If discordId provided: only admins can query other players
+ * - If no discordId: returns authenticated user's own stats
  * - Access level filtering (non-admins don't see num_prestiges)
  */
-export function useMyCurrentStats() {
+export function usePlayerCurrentStats(discordId?: string | null) {
   const { isAuthenticated, jwt } = useAuth();
 
   return useQuery({
-    queryKey: ['myCurrentStats', jwt],
+    queryKey: ['playerCurrentStats', discordId, jwt],
     queryFn: async () => {
       if (!jwt) throw new Error('Not authenticated');
 
-      const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_MY_CURRENT_STATS}`;
+      const params = new URLSearchParams();
+      if (discordId) {
+        params.set('discord_id', discordId);
+      }
+
+      const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_PLAYER_CURRENT_STATS}?${params}`;
       
       const response = await fetch(edgeFunctionUrl, {
         method: 'GET',
@@ -348,7 +357,7 @@ export function useMyCurrentStats() {
         throw new Error(errorData.error || `Failed to fetch current stats: ${response.status}`);
       }
 
-      const data: MyCurrentStatsResponse = await response.json();
+      const data: PlayerCurrentStatsResponse = await response.json();
       
       // Capitalize grade for consistency if player exists
       if (data.player && data.player.grade) {

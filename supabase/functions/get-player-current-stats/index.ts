@@ -1,14 +1,18 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 /**
- * Get My Current Stats Edge Function
+ * Get Player Current Stats Edge Function
  * 
- * This edge function provides the authenticated user's current stats from the leaderboard cache.
+ * This edge function provides a player's current stats from the leaderboard cache.
+ * Can be used for:
+ * - User viewing their own stats (discord_id from JWT)
+ * - Admin viewing any player's stats (discord_id from query parameter)
  * 
  * SECURITY:
  * =========
  * - Requires valid JWT (same as discord-auth)
- * - Extracts discord_id from JWT to identify user
+ * - If no discord_id param: uses discord_id from JWT (user's own stats)
+ * - If discord_id param provided: only admins can query other players
  * - Validates access_level from JWT
  * - Admins see num_prestiges, regular users get null for that field
  * - Uses service role key to bypass RLS for cache access
@@ -206,7 +210,32 @@ serve(async (req: Request) => {
 
     const discordId = jwtPayload.discord_id;
     const accessLevel = jwtPayload.access_level || 'user';
-    console.log(`Request from user ${discordId} with access level: ${accessLevel}`);
+
+    // Get discord_id from query parameter or use JWT discord_id
+    const url = new URL(req.url);
+    const targetDiscordId = url.searchParams.get('discord_id');
+
+    // Determine which player to query
+    let discordIdToQuery: string;
+    
+    if (targetDiscordId) {
+      // Requesting another player's stats - only admins can do this
+      if (accessLevel !== 'admin') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden: Only admins can view other players\' stats' }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      discordIdToQuery = targetDiscordId;
+      console.log(`Admin ${discordId} requesting stats for ${discordIdToQuery}`);
+    } else {
+      // No parameter - return own stats
+      discordIdToQuery = discordId;
+      console.log(`User ${discordId} requesting own stats`);
+    }
 
     // Create Supabase client with service role (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -215,7 +244,7 @@ serve(async (req: Request) => {
     const cacheMetadata = await getCacheMetadata(supabase);
 
     // Fetch the player's current stats from cache
-    const player = await getPlayerFromCache(supabase, discordId);
+    const player = await getPlayerFromCache(supabase, discordIdToQuery);
 
     // Filter based on access level (hide num_prestiges for non-admins)
     const filteredPlayer = filterByAccessLevel(player, accessLevel);
@@ -231,7 +260,7 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Get my current stats error:', error);
+    console.error('Get player current stats error:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 

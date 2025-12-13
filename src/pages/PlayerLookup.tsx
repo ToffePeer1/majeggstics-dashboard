@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { usePlayerList, usePlayerSnapshots } from '@/hooks/usePlayerData';
+import { usePlayerList, usePlayerSnapshots, usePlayerCurrentStats } from '@/hooks/usePlayerData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import PlayerSearch from '@/components/PlayerSearch';
 import { ProgressionChart } from '@/components/charts';
-import { formatInteger, bigNumberToString } from '@/utils/formatters';
+import { formatInteger, bigNumberToString, formatLastUpdated } from '@/utils/formatters';
 import { getLatestRecord } from '@/utils/dataProcessing';
 import { CSV_EXPORT_HEADERS } from '@/config/constants';
 
@@ -13,6 +13,7 @@ export default function PlayerLookup() {
   const [selectedMetric, setSelectedMetric] = useState('eb');
   const { data: playerList, isLoading: listLoading } = usePlayerList();
   const { data: snapshots, isLoading: snapshotsLoading, error, refetch } = usePlayerSnapshots(selectedPlayer);
+  const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = usePlayerCurrentStats(selectedPlayer);
 
   if (listLoading) {
     return <LoadingSpinner text="Loading player list..." />;
@@ -75,21 +76,6 @@ export default function PlayerLookup() {
     return <ErrorMessage title="No Data" message="Unable to find latest snapshot." />;
   }
 
-  // Stats table data (like Streamlit's table format)
-  const statsTableData = [
-    { metric: 'IGN', value: latest.ign },
-    { metric: 'Display Name', value: latest.display_name || 'N/A' },
-    { metric: 'Discord Name', value: latest.discord_name || 'N/A' },
-    { metric: 'Discord ID', value: latest.discord_id },
-    { metric: 'Earnings Bonus', value: bigNumberToString(latest.eb) + '%' },
-    { metric: 'Soul Eggs', value: bigNumberToString(latest.se) },
-    { metric: 'Prophecy Eggs', value: latest.pe != null ? formatInteger(latest.pe) : 'N/A' },
-    { metric: 'Truth Eggs', value: latest.te != null ? formatInteger(latest.te) : 'N/A' },
-    { metric: 'Prestiges', value: latest.num_prestiges != null ? formatInteger(latest.num_prestiges) : 'N/A' },
-    { metric: 'Role', value: latest.farmer_role || 'N/A' },
-    { metric: 'Grade', value: latest.grade || 'N/A' },
-  ];
-
   // Metric options for progression chart
   const metricOptions: Record<string, string> = {
     eb: 'Earnings Bonus',
@@ -134,26 +120,91 @@ export default function PlayerLookup() {
         <strong>{latest.ign}</strong> ({latest.display_name}) • Discord: {latest.discord_name || latest.discord_id}
       </div>
 
-      {/* Current Statistics as Table */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Current Statistics</h2>
-      <div className="card" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Metric</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {statsTableData.map((row, idx) => (
-              <tr key={idx}>
-                <td style={{ fontWeight: '500' }}>{row.metric}</td>
-                <td>{row.value}</td>
+      {/* Current Stats */}
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+        Current Stats
+      </h2>
+      {isLoadingCurrent ? (
+        <div className="card" style={{ marginBottom: '2rem', padding: '2rem', textAlign: 'center' }}>
+          <LoadingSpinner text="Loading current stats..." />
+        </div>
+      ) : errorCurrent ? (
+        <div className="card" style={{ marginBottom: '2rem' }}>
+          <ErrorMessage
+            title="Failed to Load Current Stats"
+            message={errorCurrent instanceof Error ? errorCurrent.message : 'An unknown error occurred'}
+          />
+        </div>
+      ) : !currentStatsData?.player ? (
+        <div className="warning-message" style={{ marginBottom: '2rem' }}>
+          <h3>📊 Current stats not available yet</h3>
+          <p>This player's live stats will appear here after their first update in Egg Inc (usually within 24 hours).</p>
+        </div>
+      ) : (
+        <div className="card" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
+          <div className="info-message" style={{ marginBottom: '1rem' }}>
+            Last updated: <strong>{formatLastUpdated(currentStatsData.lastUpdated)}</strong> (updates every 15 minutes from Wonky)
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ fontWeight: '500' }}>IGN</td>
+                <td>{currentStatsData.player.ign}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Display Name</td>
+                <td>{currentStatsData.player.display_name || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Discord Name</td>
+                <td>{currentStatsData.player.discord_name || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Discord ID</td>
+                <td>{currentStatsData.player.discord_id}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Earnings Bonus</td>
+                <td>{bigNumberToString(currentStatsData.player.eb)}%</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Soul Eggs</td>
+                <td>{bigNumberToString(currentStatsData.player.se)}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Prophecy Eggs</td>
+                <td>{currentStatsData.player.pe != null ? formatInteger(currentStatsData.player.pe) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Truth Eggs</td>
+                <td>{currentStatsData.player.te != null ? formatInteger(currentStatsData.player.te) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Prestiges</td>
+                <td>{currentStatsData.player.num_prestiges != null ? formatInteger(currentStatsData.player.num_prestiges) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Role</td>
+                <td>{currentStatsData.player.farmer_role || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Grade</td>
+                <td>{currentStatsData.player.grade || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Active</td>
+                <td>{currentStatsData.player.active ? '✅' : '❌'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
 

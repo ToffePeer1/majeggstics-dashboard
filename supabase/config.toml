@@ -23,5 +23,5 @@ verify_jwt = false  # We manually verify in the function code
 # Snapshot deletion - requires secret token
 verify_jwt = false
 
-[functions.get-my-current-stats]
+[functions.get-player-current-stats]
 verify_jwt = false

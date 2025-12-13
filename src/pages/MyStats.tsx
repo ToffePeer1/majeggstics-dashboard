@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { usePlayerSnapshots, useMyCurrentStats } from '@/hooks/usePlayerData';
+import { usePlayerSnapshots, usePlayerCurrentStats } from '@/hooks/usePlayerData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { ProgressionChart } from '@/components/charts';
@@ -26,7 +26,7 @@ import { CSV_EXPORT_HEADERS } from '@/config/constants';
 export default function MyStats() {
   const { user, discordId } = useAuth();
   const { data: snapshots, isLoading, error, refetch } = usePlayerSnapshots(discordId);
-  const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = useMyCurrentStats();
+  const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = usePlayerCurrentStats();
   const [selectedMetric, setSelectedMetric] = useState('eb');
 
   if (isLoading) {
