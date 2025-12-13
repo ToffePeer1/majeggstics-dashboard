@@ -137,11 +137,14 @@ async function getPlayerFromCache(
 
 /**
  * Filter data based on access level
- * Non-admins don't see num_prestiges
+ * - Admins see everything
+ * - Regular users see num_prestiges only when viewing their own stats
  */
 function filterByAccessLevel(
   player: LeaderboardPlayer | null,
-  accessLevel: 'user' | 'admin'
+  accessLevel: 'user' | 'admin',
+  userDiscordId: string,
+  targetDiscordId: string
 ): LeaderboardPlayer | null {
   if (!player) return null;
   
@@ -149,7 +152,12 @@ function filterByAccessLevel(
     return player;
   }
 
-  // For regular users, set num_prestiges to null
+  // For regular users, only show num_prestiges if viewing their own stats
+  if (userDiscordId === targetDiscordId) {
+    return player;
+  }
+
+  // Hide num_prestiges when viewing other players' stats
   return {
     ...player,
     num_prestiges: null,
@@ -246,8 +254,8 @@ serve(async (req: Request) => {
     // Fetch the player's current stats from cache
     const player = await getPlayerFromCache(supabase, discordIdToQuery);
 
-    // Filter based on access level (hide num_prestiges for non-admins)
-    const filteredPlayer = filterByAccessLevel(player, accessLevel);
+    // Filter based on access level
+    const filteredPlayer = filterByAccessLevel(player, accessLevel, discordId, discordIdToQuery);
 
     const response = {
       player: filteredPlayer,
