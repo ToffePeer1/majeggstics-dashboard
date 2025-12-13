@@ -152,10 +152,9 @@ USING ((auth.jwt() ->> 'access_level') = 'admin')
 
 **After any changes, you MUST run:**
 ```bash
-npm run lint
-npm run typecheck
+npm run validate
 ```
-**RUN BOTH COMMANDS.**
+This command runs both ESLint and TypeScript type checking
 
 If either command reports errors or warnings, you **must resolve them before considering the task complete**. This includes:
 - Fixing ESLint violations (formatting, unused imports, etc.)
