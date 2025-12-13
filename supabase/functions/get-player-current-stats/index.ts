@@ -217,6 +217,7 @@ serve(async (req: Request) => {
     }
 
     const discordId = jwtPayload.discord_id;
+    if (!jwtPayload.access_level) console.warn('JWT missing access_level, defaulting to user');
     const accessLevel = jwtPayload.access_level || 'user';
 
     // Get discord_id from query parameter or use JWT discord_id
