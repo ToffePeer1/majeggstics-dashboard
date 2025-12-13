@@ -3,8 +3,12 @@ name: CI & Deploy
 on:
   push:
     branches: '**'
+    paths-ignore:
+      - 'supabase/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'supabase/**'
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -46,13 +50,8 @@ jobs:
     name: Deploy to Production
     needs: ci
     runs-on: ubuntu-latest
-    # Only deploy on push to main (not on PRs) and only if non-supabase files changed
-    if: |
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/main' &&
-      !contains(github.event.head_commit.modified, 'supabase/') && 
-      !contains(github.event.head_commit.added, 'supabase/') &&
-      !contains(github.event.head_commit.removed, 'supabase/')
+    # Only deploy on push to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
