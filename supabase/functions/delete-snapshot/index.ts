@@ -2,6 +2,8 @@
 //@ts-nocheck
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { verifyJWT, isAdmin } from '../_shared/auth.ts';
+
 Deno.serve(async (req)=>{
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -14,14 +16,42 @@ Deno.serve(async (req)=>{
     });
   }
   try {
-    // Check for secret token
-    const secretToken = req.headers.get('x-secret-token');
+    const jwtSecret = Deno.env.get('JWT_SECRET');
     const expectedToken = Deno.env.get('SECRET_TOKEN');
-    if (!secretToken || secretToken !== expectedToken) {
-      secretToken ? console.log(`Got wrong secret token! received: "${secretToken}"`) : console.log(`Got no secret token!`);
+    
+    if (!jwtSecret || !expectedToken) {
+      throw new Error('Missing required environment variables');
+    }
+    
+    // Authentication: Accept either secret token OR admin JWT
+    const secretToken = req.headers.get('x-secret-token');
+    const authHeader = req.headers.get('Authorization');
+    
+    let authenticatedUser: string | null = null;
+    let authMethod: string | null = null;
+    
+    // Try JWT authentication first (preferred for audit trail)
+    if (authHeader) {
+      const jwtPayload = await verifyJWT(authHeader, jwtSecret);
+      if (jwtPayload && isAdmin(jwtPayload)) {
+        authenticatedUser = jwtPayload.discord_id;
+        authMethod = 'admin_jwt';
+        console.log(`Authenticated admin user: ${authenticatedUser}`);
+      }
+    }
+    
+    // Fall back to secret token (legacy/external calls)
+    if (!authenticatedUser && secretToken === expectedToken) {
+      authenticatedUser = 'secret_token';
+      authMethod = 'secret_token';
+      console.log('Authenticated via secret token');
+    }
+    
+    if (!authenticatedUser) {
+      console.log('Authentication failed');
       return new Response(JSON.stringify({
         success: false,
-        error: 'Unauthorized: Invalid or missing secret token, expected valid "x-secret-token" in headers.'
+        error: 'Unauthorized: Requires admin JWT or valid secret token'
       }), {
         status: 401,
         headers: {
@@ -47,7 +77,8 @@ Deno.serve(async (req)=>{
         }
       });
     }
-    console.log(`Deleting snapshot for date: ${snapshotDate}`);
+    console.log(`User ${authenticatedUser} (via ${authMethod}) deleting snapshot for date: ${snapshotDate}`);
+    
     // Delete from player_snapshots
     const { data: _deletedSnapshots, error: snapshotError, count: snapshotCount } = await supabase.from('player_snapshots').delete({
       count: 'exact'
@@ -60,11 +91,25 @@ Deno.serve(async (req)=>{
     if (metaError) {
       console.warn(`Failed to delete snapshot_metadata: ${metaError.message}`);
     }
+    
+    // Log the deletion for audit trail
+    const auditLog = {
+      action: 'delete_snapshot',
+      snapshot_date: snapshotDate,
+      deleted_count: snapshotCount || 0,
+      performed_by: authenticatedUser,
+      auth_method: authMethod,
+      timestamp: new Date().toISOString(),
+    };
+    
+    console.log('Audit log:', JSON.stringify(auditLog));
+    
     const response = {
       success: true,
       snapshotDate,
       deletedRecords: snapshotCount || 0,
-      message: `Deleted ${snapshotCount || 0} player snapshots for ${snapshotDate}`
+      message: `Deleted ${snapshotCount || 0} player snapshots for ${snapshotDate}`,
+      performedBy: authenticatedUser,
     };
     console.log('Delete complete:', response);
     return new Response(JSON.stringify(response), {

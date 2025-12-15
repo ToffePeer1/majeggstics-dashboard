@@ -10,14 +10,15 @@ import type {
   SnapshotSaveMetadata,
   PendingSyncData 
 } from './types.ts';
+import { SNAPSHOT_CONFIG } from './snapshot-config.ts';
 
 /**
- * Configuration constants
+ * Configuration constants (imported from centralized config)
  */
-const SYNC_WINDOW_HOURS = 1 + (5 / 60); // 1 hour, 5 minutes (65 minutes)
-const COOLDOWN_HOURS = 1.5; // Minimum time between snapshots
-const PARTIAL_SYNC_THRESHOLD = 99.0; // Percentage threshold for partial sync
-const PARTIAL_SYNC_RETRY_ATTEMPTS = 2; // Number of attempts before saving anyway
+const SYNC_WINDOW_HOURS = SNAPSHOT_CONFIG.SYNC_WINDOW_HOURS;
+const COOLDOWN_HOURS = SNAPSHOT_CONFIG.COOLDOWN_HOURS;
+const PARTIAL_SYNC_THRESHOLD = SNAPSHOT_CONFIG.PARTIAL_SYNC_THRESHOLD;
+const PARTIAL_SYNC_RETRY_ATTEMPTS = SNAPSHOT_CONFIG.PARTIAL_SYNC_RETRY_ATTEMPTS;
 
 /**
  * Determines if we should save player data as a snapshot.

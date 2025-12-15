@@ -25,7 +25,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
 
 import type { 
   BotApiPlayer, 
@@ -34,6 +33,7 @@ import type {
   UpdatePlayerDataRequest,
   UpdatePlayerDataResponse
 } from '../_shared/types.ts';
+import { verifyJWT, isServiceRole } from '../_shared/auth.ts';
 import { 
   shouldSaveSnapshot, 
   shouldSendWeekNoUpdateAlert,
@@ -52,35 +52,6 @@ const corsHeaders = {
 };
 
 const BATCH_SIZE = 100;
-
-/**
- * Verify JWT from Authorization header
- */
-async function verifyJWT(authHeader: string | null, jwtSecret: string): Promise<boolean> {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return false;
-  }
-
-  const token = authHeader.replace('Bearer ', '');
-
-  try {
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(jwtSecret);
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign', 'verify']
-    );
-
-    await verify(token, cryptoKey);
-    return true;
-  } catch (error) {
-    console.error('JWT verification failed:', error);
-    return false;
-  }
-}
 
 /**
  * Fetch data from bot API
@@ -268,30 +239,35 @@ serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const jwtSecret = Deno.env.get('JWT_SECRET');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const botApiUrl = Deno.env.get('WONKY_ENDPOINT_URL');
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const notificationEmail = Deno.env.get('NOTIFICATION_EMAIL');
+    const jwtSecret = Deno.env.get('JWT_SECRET');
 
     if (!jwtSecret || !supabaseUrl || !supabaseServiceKey || !botApiUrl) {
       throw new Error('Missing required environment variables');
     }
 
-    // Verify JWT authorization
+    // Verify service role JWT authentication
     const authHeader = req.headers.get('Authorization');
-    const isAuthorized = await verifyJWT(authHeader, jwtSecret);
-
-    if (!isAuthorized) {
+    const jwtPayload = await verifyJWT(authHeader, jwtSecret);
+    
+    if (!jwtPayload || !isServiceRole(jwtPayload)) {
+      console.error('Authentication failed: Invalid or non-service-role JWT');
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid or missing JWT' }),
+        JSON.stringify({ 
+          error: 'Unauthorized: This endpoint requires service role JWT' 
+        }),
         {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
+    
+    console.log('Authenticated via service_role JWT');
 
     console.log('=== Refresh Leaderboard Cron Started ===');
     console.log(`Timestamp: ${new Date().toISOString()}`);
