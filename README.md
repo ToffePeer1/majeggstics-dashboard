@@ -49,7 +49,7 @@ npm run validate
 
 ## Project Structure
 
-```
+```plaintext
 ├── src/
 │   ├── components/       # Reusable UI components
 │   │   └── charts/       # Plotly.js chart components
