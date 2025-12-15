@@ -1,85 +1,87 @@
-# Maj Analytics Dashboard - React + TypeScript
+# Majeggstics Analytics Dashboard
 
-A comprehensive analytics dashboard for tracking Egg Inc. player statistics with Discord OAuth authentication.
+A comprehensive analytics dashboard for tracking Majeggstics players' statistics with Discord OAuth authentication and role-based access control.  
+Deployed at [https://majeggstics-dashboard.vercel.app/login](https://majeggstics-dashboard.vercel.app/login)
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
+![React](https://img.shields.io/badge/React-18.2-blue)
 
 ## Features
 
-- 🔐 Discord OAuth authentication with role-based access control
-- 📊 Player profile analysis with historical data
-- 🏆 Leaderboards and rankings
-- 📈 Community trends over time
-- ⚖️ Multi-player comparisons
-- 📱 Responsive design
+- Secure Discord OAuth with custom JWT authentication
+- Player analytics tracking individual progress over time
+- Live leaderboards with automatic caching
+- Community trends and guild-wide statistics
+- Player comparison tool
+- Automated snapshot system with email notifications
+- Responsive design
 
-## Tech Stack
+## Contributing
 
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **React Router** - Routing
-- **React Query** - Data fetching & caching
-- **Plotly.js** - Interactive charts
-- **Supabase** - Backend database
-- **Axios** - HTTP client
+This is a collaborative project with a shared Supabase instance. Contact me (`@toffepeer1` on Discord) for development credentials.
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
-- Supabase account
-- Discord OAuth application
+- Node.js 18+ and npm
+- Development credentials (contact me on Discord)
 
-### Installation
-
-1. Install dependencies:
+### Setup
 
 ```bash
+# Clone and install
+git clone https://github.com/ToffePeer1/majeggstics-dashboard.git
+cd majeggstics-dashboard
 npm install
-```
 
-2. Copy `.env.example` to `.env` and fill in your credentials:
+# Configure environment
+cp .env.example .env.local
+# Edit .env.local with credentials I provide
 
-```bash
-cp .env.example .env
-```
-
-3. Start the development server:
-
-```bash
+# Run development server
 npm run dev
+
+# Before committing, validate your changes
+npm run validate
 ```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Building for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
 
 ## Project Structure
 
-```text
-src/
-├── assets/          # Static assets
-├── components/      # Reusable UI components
-├── config/          # Configuration files
-├── contexts/        # React contexts (auth, etc.)
-├── hooks/           # Custom React hooks
-├── pages/           # Page components
-├── services/        # API services
-├── types/           # TypeScript type definitions
-├── utils/           # Utility functions
-├── App.tsx          # Main app component
-└── main.tsx         # Entry point
+```
+├── src/
+│   ├── components/       # Reusable UI components
+│   │   └── charts/       # Plotly.js chart components
+│   ├── pages/            # Route components
+│   ├── hooks/            # Custom React hooks (useAuth, usePlayerData)
+│   ├── contexts/         # React Context providers
+│   ├── services/         # External integrations (Supabase client)
+│   ├── utils/            # Pure utility functions
+│   ├── types/            # TypeScript type definitions
+│   └── config/           # Configuration constants
+│
+├── supabase/
+│   ├── functions/        # Deno Edge Functions
+│   │   ├── _shared/      # Shared code (types, logic, email)
+│   │   ├── discord-auth/ # OAuth handler
+│   │   ├── get-leaderboard/
+│   │   ├── get-player-current-stats/
+│   │   ├── update-player-data/
+│   │   ├── delete-snapshot/
+│   │   └── refresh-leaderboard-cron/
+│   │
+│   └── migrations/       # Database migrations (apply in order)
+│
+└── .env.example          # Environment variable template
 ```
 
-## Environment Variables
+## Pull Requests
 
-See `.env.example` for all required environment variables.
+- Test your changes locally
+- Run `npm run validate` (must pass)
+- Write a clear description of what changed
+- Backend/infrastructure changes need coordination with me
 
 ## License
 
