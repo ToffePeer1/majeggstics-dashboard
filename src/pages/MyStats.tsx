@@ -6,7 +6,7 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { ProgressionChart } from '@/components/charts';
 import { getLatestRecord } from '@/utils/dataProcessing';
 import { bigNumberToString, formatInteger, formatLastUpdated } from '@/utils/formatters';
-import { CSV_EXPORT_HEADERS } from '@/config/constants';
+import { CSV_EXPORT_HEADERS, METRIC_OPTIONS, type MetricKey } from '@/config/constants';
 
 /**
  * My Stats Page
@@ -27,7 +27,7 @@ export default function MyStats() {
   const { user, discordId } = useAuth();
   const { data: snapshots, isLoading, error, refetch } = usePlayerSnapshots(discordId);
   const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = usePlayerCurrentStats();
-  const [selectedMetric, setSelectedMetric] = useState('eb');
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
 
   if (isLoading) {
     return <LoadingSpinner text="Loading your statistics..." />;
@@ -68,14 +68,6 @@ export default function MyStats() {
     );
   }
 
-  // Metric options for progression chart
-  const metricOptions: Record<string, string> = {
-    eb: 'Earnings Bonus',
-    se: 'Soul Eggs',
-    pe: 'Prophecy Eggs',
-    te: 'Truth Eggs',
-    num_prestiges: 'Number of Prestiges',
-  };
 
   // Prepare chart data for selected metric
   // Filter out null/undefined values instead of filling with 0
@@ -169,6 +161,14 @@ export default function MyStats() {
                 <td>{currentPlayer.te != null ? formatInteger(currentPlayer.te) : 'N/A'}</td>
               </tr>
               <tr>
+                <td style={{ fontWeight: '500' }}>Mystical Egg Ratio (MER)</td>
+                <td>{currentPlayer.mer != null && !isNaN(currentPlayer.mer) ? currentPlayer.mer.toFixed(2) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Jer's Egg Ratio (JER)</td>
+                <td>{currentPlayer.jer != null && !isNaN(currentPlayer.jer) ? currentPlayer.jer.toFixed(2) : 'N/A'}</td>
+              </tr>
+              <tr>
                 <td style={{ fontWeight: '500' }}>Prestiges</td>
                 <td>{currentPlayer.num_prestiges != null ? formatInteger(currentPlayer.num_prestiges) : 'N/A'}</td>
               </tr>
@@ -200,19 +200,19 @@ export default function MyStats() {
           </label>
           <select 
             value={selectedMetric} 
-            onChange={(e) => setSelectedMetric(e.target.value)} 
+            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)} 
             className="select"
             style={{ maxWidth: '300px' }}
           >
-            {Object.entries(metricOptions).map(([key, label]) => (
+            {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
         </div>
         <ProgressionChart
           data={chartData}
-          title={`${metricOptions[selectedMetric]} Progression`}
-          yAxisTitle={metricOptions[selectedMetric]}
+          title={`${METRIC_OPTIONS[selectedMetric]} Progression`}
+          yAxisTitle={METRIC_OPTIONS[selectedMetric]}
           useLogScale={useLogScale}
           showMarkers={true}
         />

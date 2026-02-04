@@ -5,11 +5,12 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { formatInteger, bigNumberToString, formatLastUpdated } from '@/utils/formatters';
 import { RoleDistributionChart } from '@/components/charts';
+import { METRIC_OPTIONS, type MetricKey } from '@/config/constants';
 
 export default function Leaderboards() {
   const { discordId, accessLevel } = useAuth();
   const isAdmin = accessLevel === 'admin';
-  const [sortBy, setSortBy] = useState('eb');
+  const [sortBy, setSortBy] = useState<MetricKey>('eb');
   const [showInactive, setShowInactive] = useState(true);
 
   // Fetch cached leaderboard data from edge function
@@ -88,23 +89,26 @@ export default function Leaderboards() {
   // Find current user's rank
   const currentUserRank = discordId && playerRanks[discordId] ? playerRanks[discordId] : null;
 
-  const sortOptions: Record<string, string> = {
-    eb: 'Earnings Bonus',
-    se: 'Soul Eggs',
-    pe: 'Prophecy Eggs',
-    te: 'Truth Eggs',
-    // Only show prestige sorting option for admins (data is not fetched for non-admins)
-    ...(isAdmin ? { num_prestiges: 'Number of Prestiges' } : {}),
-  };
+  // Build sort options based on access level
+  // Non-admins don't see num_prestiges option since that data isn't fetched for them
+  const sortOptions = Object.fromEntries(
+    Object.entries(METRIC_OPTIONS).filter(([key]) => 
+      isAdmin || key !== 'num_prestiges'
+    )
+  );
 
   // Calculate statistics
   const ebValues = filteredPlayers.map(p => p.eb).filter(v => v != null);
   const peValues = filteredPlayers.map(p => p.pe).filter(v => v != null);
   const seValues = filteredPlayers.map(p => p.se).filter(v => v != null);
+  const merValues = filteredPlayers.map(p => p.mer).filter(v => v != null && !isNaN(v) && isFinite(v));
+  const jerValues = filteredPlayers.map(p => p.jer).filter(v => v != null && !isNaN(v) && isFinite(v));
   
   const totalSe = seValues.reduce((sum, v) => sum + v, 0);
   const totalEb = ebValues.reduce((sum, v) => sum + v, 0);
   const totalPe = peValues.reduce((sum, v) => sum + v, 0);
+  const avgMer = merValues.length > 0 ? merValues.reduce((sum, v) => sum + v, 0) / merValues.length : 0;
+  const avgJer = jerValues.length > 0 ? jerValues.reduce((sum, v) => sum + v, 0) / jerValues.length : 0;
 
   // Role distribution
   const roleDistribution: Record<string, number> = {};
@@ -155,6 +159,14 @@ export default function Leaderboards() {
           <div className="metric-label">Total PE</div>
           <div className="metric-value" style={{ fontSize: '1.25rem' }}>{formatInteger(totalPe)}</div>
         </div>
+        <div className="metric-card">
+          <div className="metric-label">Avg MER</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{avgMer.toFixed(2)}</div>
+        </div>
+        <div className="metric-card">
+          <div className="metric-label">Avg JER</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{avgJer.toFixed(2)}</div>
+        </div>
       </div>
 
       {/* Role Distribution Chart */}
@@ -172,7 +184,7 @@ export default function Leaderboards() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="select" style={{ maxWidth: '300px' }}>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as MetricKey)} className="select" style={{ maxWidth: '300px' }}>
               {Object.entries(sortOptions).map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
@@ -205,6 +217,8 @@ export default function Leaderboards() {
               <th>SE</th>
               <th>PE</th>
               <th>TE</th>
+              <th>MER</th>
+              <th>JER</th>
               {isAdmin && <th>Prestiges</th>}
               <th>Role</th>
               <th>Grade</th>
@@ -220,6 +234,8 @@ export default function Leaderboards() {
                 <td>{bigNumberToString(player.se)}</td>
                 <td>{formatInteger(player.pe)}</td>
                 <td>{player.te != null ? formatInteger(player.te) : 'N/A'}</td>
+                <td>{player.mer != null && !isNaN(player.mer) ? player.mer.toFixed(2) : 'N/A'}</td>
+                <td>{player.jer != null && !isNaN(player.jer) ? player.jer.toFixed(2) : 'N/A'}</td>
                 {isAdmin && <td>{formatInteger(player.num_prestiges)}</td>}
                 <td>{player.farmer_role}</td>
                 <td>{player.grade}</td>

@@ -1,11 +1,12 @@
 // Data processing utilities
 import type { PlayerSnapshot, ChartData, GrowthData } from '@/types';
-import { EBtoRole } from '@/utils/eb';
+import { EBtoRole, calculatePlayerMER, calculatePlayerJER } from '@/utils/eb';
 
 /**
  * Preprocess player snapshot data:
  * - Fill in missing farmer roles from EB
  * - Normalize grade to uppercase
+ * - Calculate MER and JER if not present
  */
 export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
   const processed = { ...snapshot };
@@ -19,6 +20,24 @@ export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
   if (!processed.farmer_role || processed.farmer_role.trim() === '') {
     if (processed.eb != null) {
       processed.farmer_role = EBtoRole(processed.eb);
+    }
+  }
+  
+  // Calculate MER if not present or invalid
+  if (processed.mer == null || isNaN(processed.mer)) {
+    if (processed.pe != null && processed.se != null) {
+      processed.mer = calculatePlayerMER(processed.pe, processed.se);
+    } else {
+      processed.mer = 0;
+    }
+  }
+  
+  // Calculate JER if not present or invalid
+  if (processed.jer == null || isNaN(processed.jer)) {
+    if (processed.pe != null && processed.se != null) {
+      processed.jer = calculatePlayerJER(processed.pe, processed.se);
+    } else {
+      processed.jer = 0;
     }
   }
   

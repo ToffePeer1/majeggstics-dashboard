@@ -6,11 +6,12 @@ import PlayerSearch from '@/components/PlayerSearch';
 import { MultiLineChart } from '@/components/charts';
 import { bigNumberToString, formatInteger, formatScientificNotation } from '@/utils/formatters';
 import { getLatestRecord } from '@/utils/dataProcessing';
+import { METRIC_OPTIONS, type MetricKey } from '@/config/constants';
 import type { PlayerSnapshot } from '@/types';
 
 export default function PlayerComparison() {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [selectedMetric, setSelectedMetric] = useState('eb');
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const [activePlayerTab, setActivePlayerTab] = useState<string | null>(null);
   const { data: playerList, isLoading: listLoading } = usePlayerList();
   const { data: comparisonData, isLoading: dataLoading, error, refetch } = usePlayerComparison(selectedPlayers);
@@ -78,6 +79,8 @@ export default function PlayerComparison() {
               <li><strong>Soul Eggs (SE)</strong>: Prestige currency</li>
               <li><strong>Prophecy Eggs (PE)</strong>: Rare prestige currency</li>
               <li><strong>Truth Eggs (TE)</strong>: Lifetime earnings</li>
+              <li><strong>Mystical Egg Ratio (MER)</strong>: MER formula</li>
+              <li><strong>Jer's Egg Ratio (JER)</strong>: JER formula</li>
               <li><strong>Number of Prestiges</strong>: Total prestige count</li>
             </ul>
           </div>
@@ -142,16 +145,14 @@ export default function PlayerComparison() {
     se: { label: 'Soul Eggs', key: 'se', format: bigNumberToString },
     pe: { label: 'Prophecy Eggs', key: 'pe', format: formatInteger },
     te: { label: 'Truth Eggs', key: 'te', format: formatInteger },
+    mer: { label: 'Mystical Egg Ratio (MER)', key: 'mer', format: (val: number) => val.toFixed(2) },
+    jer: { label: "Jer's Egg Ratio (JER)", key: 'jer', format: (val: number) => val.toFixed(2) },
     num_prestiges: { label: 'Prestiges', key: 'num_prestiges', format: formatInteger },
   };
 
-  const metricOptions: Record<string, string> = {
-    eb: 'Earnings Bonus',
-    se: 'Soul Eggs',
-    pe: 'Prophecy Eggs',
-    te: 'Truth Eggs',
-    num_prestiges: 'Number of Prestiges',
-  };
+  const metricOptions = Object.fromEntries(
+    Object.entries(metrics).map(([key, value]) => [key, value.label])
+  );
 
   const bestPlayers: { [key: string]: PlayerSnapshot } = {};
   Object.entries(metrics).forEach(([metricKey, { key }]) => {
@@ -199,7 +200,7 @@ export default function PlayerComparison() {
       // Filter to only snapshots with valid values for this metric
       const validSnapshots = snapshots.filter(s => {
         const value = (s as unknown as Record<string, number | null | undefined>)[selectedMetric];
-        return value != null;
+        return value != null && !isNaN(value) && isFinite(value);
       });
       
       if (validSnapshots.length >= 2) {
@@ -347,11 +348,11 @@ export default function PlayerComparison() {
           </label>
           <select 
             value={selectedMetric} 
-            onChange={(e) => setSelectedMetric(e.target.value)} 
+            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)} 
             className="select"
             style={{ maxWidth: '300px' }}
           >
-            {Object.entries(metricOptions).map(([key, label]) => (
+            {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
@@ -360,8 +361,8 @@ export default function PlayerComparison() {
         {Object.keys(chartData).length > 0 && (
           <MultiLineChart
             data={chartData}
-            title={`${metricOptions[selectedMetric]} Comparison`}
-            yAxisTitle={metricOptions[selectedMetric]}
+            title={`${METRIC_OPTIONS[selectedMetric]} Comparison`}
+            yAxisTitle={METRIC_OPTIONS[selectedMetric]}
             useLogScale={useLogScale}
           />
         )}

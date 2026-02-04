@@ -12,6 +12,8 @@ export interface PlayerSnapshot {
   se: number;
   pe: number;
   te: number;
+  mer: number;
+  jer: number;
   num_prestiges: number;
   farmer_role: string;
   grade: string;
@@ -113,6 +115,12 @@ export interface AggregateStats {
   pe_mean: number;
   pe_median: number;
   pe_max: number;
+  mer_mean: number;
+  mer_median: number;
+  mer_max: number;
+  jer_mean: number;
+  jer_median: number;
+  jer_max: number;
   num_prestiges_mean: number;
   num_prestiges_sum: number;
 }

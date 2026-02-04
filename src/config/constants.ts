@@ -83,3 +83,16 @@ export const GRADE_COLORS = {
 } as const;
 
 export const GRADES = ['AAA', 'AA', 'A', 'B', 'C'] as const;
+
+// Metric options for charts and visualizations
+export const METRIC_OPTIONS = {
+  eb: 'Earnings Bonus',
+  se: 'Soul Eggs',
+  pe: 'Prophecy Eggs',
+  te: 'Truth Eggs',
+  mer: 'Mystical Egg Ratio (MER)',
+  jer: "Jer's Egg Ratio (JER)",
+  num_prestiges: 'Number of Prestiges',
+} as const;
+
+export type MetricKey = keyof typeof METRIC_OPTIONS;

@@ -6,11 +6,11 @@ import PlayerSearch from '@/components/PlayerSearch';
 import { ProgressionChart } from '@/components/charts';
 import { formatInteger, bigNumberToString, formatLastUpdated } from '@/utils/formatters';
 import { getLatestRecord } from '@/utils/dataProcessing';
-import { CSV_EXPORT_HEADERS } from '@/config/constants';
+import { CSV_EXPORT_HEADERS, METRIC_OPTIONS, type MetricKey } from '@/config/constants';
 
 export default function PlayerLookup() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [selectedMetric, setSelectedMetric] = useState('eb');
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const { data: playerList, isLoading: listLoading } = usePlayerList();
   const { data: snapshots, isLoading: snapshotsLoading, error, refetch } = usePlayerSnapshots(selectedPlayer);
   const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = usePlayerCurrentStats(selectedPlayer);
@@ -75,16 +75,6 @@ export default function PlayerLookup() {
   if (!latest) {
     return <ErrorMessage title="No Data" message="Unable to find latest snapshot." />;
   }
-
-  // Metric options for progression chart
-  const metricOptions: Record<string, string> = {
-    eb: 'Earnings Bonus',
-    se: 'Soul Eggs',
-    pe: 'Prophecy Eggs',
-    te: 'Truth Eggs',
-    num_prestiges: 'Number of Prestiges',
-  };
-
   // Prepare chart data for selected metric
   // Filter out null/undefined values instead of filling with 0
   const chartData = snapshots
@@ -184,6 +174,20 @@ export default function PlayerLookup() {
               <tr>
                 <td style={{ fontWeight: '500' }}>Truth Eggs</td>
                 <td>{currentStatsData.player.te != null ? formatInteger(currentStatsData.player.te) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Mystical Egg Ratio (MER)</td>
+                <td>{currentStatsData.player.mer != null && !isNaN(currentStatsData.player.mer) ? currentStatsData.player.mer.toFixed(2) : 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: '500' }}>Jer's Egg Ratio (JER)</td>
+                <td>{
+                (
+                  currentStatsData.player.jer != null &&
+                  !isNaN(currentStatsData.player.jer) &&
+                  isFinite(currentStatsData.player.jer)
+                ) ? currentStatsData.player.jer.toFixed(2) : 'N/A'
+                }</td>
               </tr>
               <tr>
                 <td style={{ fontWeight: '500' }}>Prestiges</td>
@@ -287,19 +291,19 @@ export default function PlayerLookup() {
           </label>
           <select 
             value={selectedMetric} 
-            onChange={(e) => setSelectedMetric(e.target.value)} 
+            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)} 
             className="select"
             style={{ maxWidth: '300px' }}
           >
-            {Object.entries(metricOptions).map(([key, label]) => (
+            {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
         </div>
         <ProgressionChart
           data={chartData}
-          title={`${metricOptions[selectedMetric]} Progression`}
-          yAxisTitle={metricOptions[selectedMetric]}
+          title={`${METRIC_OPTIONS[selectedMetric]} Progression`}
+          yAxisTitle={METRIC_OPTIONS[selectedMetric]}
           useLogScale={useLogScale}
           showMarkers={true}
         />

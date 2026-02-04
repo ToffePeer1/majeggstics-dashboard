@@ -87,3 +87,22 @@ export function getColorForEB(eb: number): string {
   const oom = Math.min(Math.max(power, 0), FARMER_ROLES.length - 1);
   return FARMER_ROLES[oom].color;
 }
+
+export function calculatePlayerMER(
+  pe: number,
+  se: number
+) {
+    if (se <= 0)
+        return 0;
+
+    const seQ = se / 1e18;
+    return (91 * Math.log10(seQ) + 200 - pe) / 10;
+}
+
+export function calculatePlayerJER(
+  pe: number,
+  se: number
+) {
+  const logSE = Math.log10(se);
+  return (((0.1519 * Math.pow(logSE, 3) - 4.8517 * Math.pow(logSE, 2) + 48.248 * logSE - 143.46) / pe)*100*pe+100*49) / (pe + 100);
+}

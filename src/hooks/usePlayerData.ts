@@ -5,6 +5,7 @@ import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTIC
 import type { PlayerSnapshot, SnapshotMetadata, PlayerListItem, WeeklyStatistics } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { preprocessPlayerData } from '@/utils/dataProcessing';
+import { calculatePlayerMER, calculatePlayerJER } from '@/utils/eb';
 
 /**
  * Fetch all player snapshots for the current user
@@ -244,6 +245,8 @@ export interface CachedLeaderboardResponse {
     se: number;
     pe: number;
     te: number | null;
+    mer: number;
+    jer: number;
     num_prestiges: number | null;
     farmer_role: string | null;
     grade: string;
@@ -294,6 +297,9 @@ export function useCachedLeaderboard() {
       for (const player of data.players) {
         // Capitalize grade for consistency
         player.grade = player.grade.toUpperCase();
+        // Calculate MER and JER client-side from PE and SE
+        player.mer = calculatePlayerMER(player.pe, player.se);
+        player.jer = calculatePlayerJER(player.pe, player.se);
       }
       return data;
     },
@@ -359,9 +365,14 @@ export function usePlayerCurrentStats(discordId?: string | null) {
 
       const data: PlayerCurrentStatsResponse = await response.json();
       
-      // Capitalize grade for consistency if player exists
-      if (data.player && data.player.grade) {
-        data.player.grade = data.player.grade.toUpperCase();
+      // Capitalize grade for consistency and calculate MER/JER if player exists
+      if (data.player) {
+        if (data.player.grade) {
+          data.player.grade = data.player.grade.toUpperCase();
+        }
+        // Calculate MER and JER from PE and SE
+        data.player.mer = calculatePlayerMER(data.player.pe, data.player.se);
+        data.player.jer = calculatePlayerJER(data.player.pe, data.player.se);
       }
       
       return data;
