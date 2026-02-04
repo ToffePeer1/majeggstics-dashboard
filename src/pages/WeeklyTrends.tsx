@@ -78,9 +78,9 @@ export default function WeeklyTrends() {
   // Get latest stats
   const latestStats = stats[stats.length - 1];
   const totalSnapshots = stats.length;
-  const currentPlayerCount = showActiveOnly ? latestStats?.active_player_count || 0 : latestStats?.player_count || 0;
-  const avgPlayerCount = Math.round(stats.reduce((sum, s) => sum + (showActiveOnly ? s.active_player_count : s.player_count), 0) / stats.length);
-  const maxPlayerCount = Math.max(...stats.map(s => showActiveOnly ? s.active_player_count : s.player_count));
+  const currentPlayerCount = showActiveOnly ? (latestStats?.active_player_count || 0) : (latestStats?.player_count || 0);
+  const avgPlayerCount = Math.round(stats.reduce((sum, s) => sum + (showActiveOnly ? (s.active_player_count || 0) : s.player_count), 0) / stats.length);
+  const maxPlayerCount = Math.max(...stats.map(s => showActiveOnly ? (s.active_player_count || 0) : s.player_count));
 
   // Player growth calculation
   const firstStats = stats[0];
@@ -94,7 +94,7 @@ export default function WeeklyTrends() {
   // Prepare player count chart data
   const playerCountData = stats.map(s => ({
     snapshot_date: s.snapshot_date,
-    value: showActiveOnly ? s.active_player_count : s.player_count,
+    value: showActiveOnly ? (s.active_player_count || 0) : s.player_count,
   }));
 
   // Prepare grade distribution data
