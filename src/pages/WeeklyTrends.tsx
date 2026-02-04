@@ -48,6 +48,7 @@ function formatMetricValue(value: number | null | undefined, metric: MetricKey):
 export default function WeeklyTrends() {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const [selectedAggregate, setSelectedAggregate] = useState<AggregateKey>('avg');
+  const [showActiveOnly, setShowActiveOnly] = useState<boolean>(false);
   
   const { data: stats, isLoading, error, refetch } = useWeeklyStatistics();
 
@@ -77,22 +78,23 @@ export default function WeeklyTrends() {
   // Get latest stats
   const latestStats = stats[stats.length - 1];
   const totalSnapshots = stats.length;
-  const latestPlayerCount = latestStats?.player_count || 0;
-  const avgPlayerCount = Math.round(stats.reduce((sum, s) => sum + s.player_count, 0) / stats.length);
-  const maxPlayerCount = Math.max(...stats.map(s => s.player_count));
+  const currentPlayerCount = showActiveOnly ? (latestStats?.active_player_count || 0) : (latestStats?.player_count || 0);
+  const avgPlayerCount = Math.round(stats.reduce((sum, s) => sum + (showActiveOnly ? (s.active_player_count || 0) : s.player_count), 0) / stats.length);
+  const maxPlayerCount = Math.max(...stats.map(s => showActiveOnly ? (s.active_player_count || 0) : s.player_count));
 
   // Player growth calculation
   const firstStats = stats[0];
-  const playerGrowth = latestStats.player_count - firstStats.player_count;
-  const playerGrowthPct = firstStats.player_count > 0 
-    ? ((playerGrowth / firstStats.player_count) * 100).toFixed(1) 
+  const firstPlayerCount = showActiveOnly ? firstStats.active_player_count : firstStats.player_count;
+  const playerGrowth = currentPlayerCount - firstPlayerCount;
+  const playerGrowthPct = firstPlayerCount > 0 
+    ? ((playerGrowth / firstPlayerCount) * 100).toFixed(1) 
     : '0';
   const avgWeeklyGrowth = (playerGrowth / stats.length).toFixed(1);
 
   // Prepare player count chart data
   const playerCountData = stats.map(s => ({
     snapshot_date: s.snapshot_date,
-    value: s.player_count,
+    value: showActiveOnly ? (s.active_player_count || 0) : s.player_count,
   }));
 
   // Prepare grade distribution data
@@ -127,7 +129,7 @@ export default function WeeklyTrends() {
         </div>
         <div className="metric-card">
           <div className="metric-label">Latest Player Count</div>
-          <div className="metric-value">{formatInteger(latestPlayerCount)}</div>
+          <div className="metric-value">{formatInteger(currentPlayerCount)}</div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Average Player Count</div>
@@ -140,11 +142,26 @@ export default function WeeklyTrends() {
       </div>
 
       {/* Player Count Over Time */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Active Players Over Time</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+        {showActiveOnly ? 'Active' : 'All'} Players Over Time
+      </h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
+        {/* Toggle for Active/All Players */}
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showActiveOnly}
+              onChange={(e) => setShowActiveOnly(e.target.checked)}
+              style={{ marginRight: '0.5rem', cursor: 'pointer' }}
+            />
+            <span>Show active players only</span>
+          </label>
+        </div>
+        
         <ProgressionChart
           data={playerCountData}
-          title="Player Count Over Time"
+          title={`${showActiveOnly ? 'Active' : 'All'} Players Over Time`}
           yAxisTitle="Number of Players"
           useLogScale={false}
           showMarkers={true}
