@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 /**
  * Get Leaderboard Edge Function
  * 
@@ -18,10 +16,10 @@
  * - Admins see num_prestiges, regular users get null for that field
  * - Uses service role key to bypass RLS for cache management
  */
-
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { verify } from 'jwt';
+import getUsers from '../_shared/wonky.ts';
+import { getEnvVariable, getSupabaseClient, type SupabaseClient } from '../_shared/utils.ts';
+import { type LeaderboardPlayer } from "../_shared/types.ts";
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -32,22 +30,6 @@ const corsHeaders = {
 
 // Cache duration in minutes
 const CACHE_DURATION_MINUTES = 15;
-
-interface LeaderboardPlayer {
-  discord_id: string;
-  ign: string;
-  display_name: string | null;
-  discord_name: string;
-  eb: number;
-  se: number;
-  pe: number;
-  te: number | null;
-  num_prestiges: number | null;
-  farmer_role: string | null;
-  grade: string;
-  is_guest: boolean;
-  active: boolean;
-}
 
 interface CacheMetadata {
   id: number;
@@ -107,17 +89,12 @@ function isCacheFresh(lastUpdated: string | null): boolean {
 }
 
 /**
- * Fetch fresh data from the bot API
+ * Fetch fresh data from the bot API via wonky module
  */
-async function fetchFromBotAPI(botApiUrl: string): Promise<LeaderboardPlayer[]> {
+async function fetchFromBotAPI(): Promise<LeaderboardPlayer[]> {
   console.log('Fetching fresh data from bot API...');
 
-  const response = await fetch(botApiUrl);
-  if (!response.ok) {
-    throw new Error(`Bot API returned ${response.status}: ${response.statusText}`);
-  }
-
-  const players = await response.json();
+  const players = await getUsers();
 
   if (!Array.isArray(players) || players.length === 0) {
     throw new Error('No player data returned from bot API');
@@ -147,7 +124,7 @@ async function fetchFromBotAPI(botApiUrl: string): Promise<LeaderboardPlayer[]> 
  * Update the cache in the database
  */
 async function updateCache(
-  supabase,
+  supabase: SupabaseClient,
   players: LeaderboardPlayer[]
 ): Promise<void> {
   console.log(`Updating cache with ${players.length} players...`);
@@ -197,7 +174,7 @@ async function updateCache(
 /**
  * Get cached data from the database (handles pagination)
  */
-async function getCachedData(supabase): Promise<LeaderboardPlayer[]> {
+async function getCachedData(supabase: SupabaseClient): Promise<LeaderboardPlayer[]> {
   const allPlayers: LeaderboardPlayer[] = [];
   const PAGE_SIZE = 1000;
   let offset = 0;
@@ -228,7 +205,7 @@ async function getCachedData(supabase): Promise<LeaderboardPlayer[]> {
 /**
  * Get cache metadata (last update time)
  */
-async function getCacheMetadata(supabase): Promise<CacheMetadata | null> {
+async function getCacheMetadata(supabase: SupabaseClient): Promise<CacheMetadata | null> {
   const { data, error } = await supabase
     .from('leaderboard_cache_metadata')
     .select('*')
@@ -263,7 +240,7 @@ function filterByAccessLevel(
   }));
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -282,12 +259,11 @@ serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const jwtSecret = Deno.env.get('JWT_SECRET');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const botApiUrl = Deno.env.get('WONKY_ENDPOINT_URL');
+    const jwtSecret = getEnvVariable('JWT_SECRET');
+    const supabaseUrl = getEnvVariable('SUPABASE_URL');
+    const supabaseServiceKey = getEnvVariable('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!jwtSecret || !supabaseUrl || !supabaseServiceKey || !botApiUrl) {
+    if (!jwtSecret || !supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing required environment variables');
     }
 
@@ -320,7 +296,7 @@ serve(async (req: Request) => {
     console.log(`Request from user ${jwtPayload.discord_id} with access level: ${accessLevel}`);
 
     // Create Supabase client with service role (bypasses RLS)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseClient();
 
     // Check cache freshness
     const cacheMetadata = await getCacheMetadata(supabase);
@@ -334,7 +310,7 @@ serve(async (req: Request) => {
     } else {
       console.log('Cache is stale, fetching fresh data');
       try {
-        players = await fetchFromBotAPI(botApiUrl);
+        players = await fetchFromBotAPI();
         await updateCache(supabase, players);
       } catch (fetchError) {
         // If fetch fails but we have cached data, return stale data

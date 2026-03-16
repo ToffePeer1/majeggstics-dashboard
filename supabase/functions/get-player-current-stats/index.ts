@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 /**
  * Get Player Current Stats Edge Function
  * 
@@ -24,9 +22,9 @@
  * - Reuses existing leaderboard cache (no separate API call)
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { verify } from 'jwt';
+import { getEnvVariable, getSupabaseClient, type SupabaseClient } from '../_shared/utils.ts';
+import { type LeaderboardPlayer } from '../_shared/types.ts';
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -34,22 +32,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
-
-interface LeaderboardPlayer {
-  discord_id: string;
-  ign: string;
-  display_name: string | null;
-  discord_name: string;
-  eb: number;
-  se: number;
-  pe: number;
-  te: number | null;
-  num_prestiges: number | null;
-  farmer_role: string | null;
-  grade: string;
-  is_guest: boolean;
-  active: boolean;
-}
 
 interface CacheMetadata {
   id: number;
@@ -96,7 +78,7 @@ async function verifyJWT(authHeader: string | null, jwtSecret: string): Promise<
 /**
  * Get cache metadata (last update time)
  */
-async function getCacheMetadata(supabase): Promise<CacheMetadata | null> {
+async function getCacheMetadata(supabase: SupabaseClient): Promise<CacheMetadata | null> {
   const { data, error } = await supabase
     .from('leaderboard_cache_metadata')
     .select('*')
@@ -115,7 +97,7 @@ async function getCacheMetadata(supabase): Promise<CacheMetadata | null> {
  * Get current stats for a specific player from cache
  */
 async function getPlayerFromCache(
-  supabase,
+  supabase: SupabaseClient,
   discordId: string
 ): Promise<LeaderboardPlayer | null> {
   const { data, error } = await supabase
@@ -164,7 +146,7 @@ function filterByAccessLevel(
   };
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -183,9 +165,9 @@ serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const jwtSecret = Deno.env.get('JWT_SECRET');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const jwtSecret = getEnvVariable('JWT_SECRET');
+    const supabaseUrl = getEnvVariable('SUPABASE_URL');
+    const supabaseServiceKey = getEnvVariable('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!jwtSecret || !supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing required environment variables');
@@ -247,7 +229,7 @@ serve(async (req: Request) => {
     }
 
     // Create Supabase client with service role (bypasses RLS)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseClient();
 
     // Get cache metadata to include last updated time
     const cacheMetadata = await getCacheMetadata(supabase);

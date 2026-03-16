@@ -1,10 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { verifyJWT, isAdmin } from '../_shared/auth.ts';
+import { getEnvVariable, getSupabaseClient } from '../_shared/utils.ts';
 
-Deno.serve(async (req)=>{
+Deno.serve(async (req: Request)=>{
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -16,8 +13,8 @@ Deno.serve(async (req)=>{
     });
   }
   try {
-    const jwtSecret = Deno.env.get('JWT_SECRET');
-    const expectedToken = Deno.env.get('SECRET_TOKEN');
+    const jwtSecret = getEnvVariable('JWT_SECRET');
+    const expectedToken = getEnvVariable('SECRET_TOKEN');
     
     if (!jwtSecret || !expectedToken) {
       throw new Error('Missing required environment variables');
@@ -61,7 +58,7 @@ Deno.serve(async (req)=>{
       });
     }
     // Create Supabase client with service role for admin access
-    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const supabase = getSupabaseClient();
     // Parse request body to get snapshot date
     const body = await req.json();
     const snapshotDate = body.snapshot_date;

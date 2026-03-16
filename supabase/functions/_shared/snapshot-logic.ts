@@ -34,11 +34,11 @@ const PARTIAL_SYNC_RETRY_ATTEMPTS = SNAPSHOT_CONFIG.PARTIAL_SYNC_RETRY_ATTEMPTS;
  * @param metadata - Current snapshot save metadata from database
  * @returns Decision object with shouldSave flag and detailed reasoning
  */
-export async function shouldSaveSnapshot(
+export function shouldSaveSnapshot(
   players: BotApiPlayer[],
   excludedIds: string[],
   metadata: SnapshotSaveMetadata | null
-): Promise<SnapshotDecision> {
+): SnapshotDecision {
   const totalPlayersReceived = players.length;
   
   // Filter out guest users and excluded players

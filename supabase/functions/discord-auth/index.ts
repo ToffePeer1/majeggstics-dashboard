@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck
 /**
  * Discord OAuth Edge Function
  * 
@@ -25,9 +23,8 @@
  * - Any modification invalidates the cryptographic signature
  * - Supabase rejects requests with invalid signatures
  */
-
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { create, getNumericDate } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { create, getNumericDate } from 'jwt';
+import { getEnvVariable } from '../_shared/utils.ts';
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -275,9 +272,6 @@ async function createSupabaseJWT(
   return { token, expiresAt };
 }
 
-/**
- * Validate required environment variables
- */
 function validateEnvironment(): {
   clientId: string;
   clientSecret: string;
@@ -288,44 +282,27 @@ function validateEnvironment(): {
   ycRoleId: string;
   adminRoleId: string;
 } {
-  const clientId = Deno.env.get('DISCORD_CLIENT_ID');
-  const clientSecret = Deno.env.get('DISCORD_CLIENT_SECRET');
-  const jwtSecret = Deno.env.get('JWT_SECRET');
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const guildId = Deno.env.get('EGGINC_GUILD');
-  const majRoleId = Deno.env.get('EGGINC_MAJ_ROLE');
-  const ycRoleId = Deno.env.get('EGGINC_YC_ROLE');
-  const adminRoleId = Deno.env.get('EGGINC_WONKY_LEADER_ROLE');
+  const vars = {
+    clientId:     'DISCORD_CLIENT_ID',
+    clientSecret: 'DISCORD_CLIENT_SECRET',
+    jwtSecret:    'JWT_SECRET',
+    supabaseUrl:  'SUPABASE_URL',
+    guildId:      'EGGINC_GUILD',
+    majRoleId:    'EGGINC_MAJ_ROLE',
+    ycRoleId:     'EGGINC_YC_ROLE',
+    adminRoleId:  'EGGINC_WONKY_LEADER_ROLE',
+  } as const;
 
-  if (!clientId) {
-    throw new Error('Missing DISCORD_CLIENT_ID environment variable');
-  }
-  if (!clientSecret) {
-    throw new Error('Missing DISCORD_CLIENT_SECRET environment variable');
-  }
-  if (!jwtSecret) {
-    throw new Error('Missing JWT_SECRET environment variable');
-  }
-  if (!supabaseUrl) {
-    throw new Error('Missing SUPABASE_URL environment variable');
-  }
-  if (!guildId) {
-    throw new Error('Missing EGGINC_GUILD environment variable');
-  }
-  if (!majRoleId) {
-    throw new Error('Missing EGGINC_MAJ_ROLE environment variable');
-  }
-  if (!ycRoleId) {
-    throw new Error('Missing EGGINC_YC_ROLE environment variable');
-  }
-  if (!adminRoleId) {
-    throw new Error('Missing EGGINC_WONKY_LEADER_ROLE environment variable');
-  }
-
-  return { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId };
+  return Object.fromEntries(
+    Object.entries(vars).map(([key, envKey]) => {
+      const value = getEnvVariable(envKey);
+      if (!value) throw new Error(`Missing ${envKey} environment variable`);
+      return [key, value];
+    })
+  ) as ReturnType<typeof validateEnvironment>;
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

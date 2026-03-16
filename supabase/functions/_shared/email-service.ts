@@ -1,12 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 // ============================================================================
 // Email Service
 // ============================================================================
 // Handles email sending via Resend API with HTML formatting
 
 import type { EmailData, EmailResult, SnapshotDecision } from './types.ts';
-import { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { type SupabaseClient } from './utils.ts';
+import type { Json } from './database.types.ts';
 
 /**
  * Send email via Resend API
@@ -81,10 +80,10 @@ export async function logEmail(
         subject: emailData.subject,
         body_preview: emailData.bodyText.substring(0, 200),
         success: result.success,
-        response_data: result.responseData,
-        error_message: result.error,
-        related_snapshot_date: emailData.relatedSnapshotDate,
-        metadata: emailData.metadata,
+        response_data: result.responseData as Json,
+        error_message: result.error || null,
+        related_snapshot_date: emailData.relatedSnapshotDate || null,
+        metadata: (emailData.metadata as Json) || null,
       });
 
     if (error) {

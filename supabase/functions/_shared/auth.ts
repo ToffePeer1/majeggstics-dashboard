@@ -1,9 +1,7 @@
-//@ts-nocheck
 // ============================================================================
 // Shared Authentication Utilities
 // ============================================================================
-
-import { verify } from 'https://deno.land/x/djwt@v2.8/mod.ts';
+import { verify } from 'jwt';
 
 /**
  * Standard JWT payload structure for user authentication

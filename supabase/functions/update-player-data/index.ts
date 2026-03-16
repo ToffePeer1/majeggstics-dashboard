@@ -1,8 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-nocheck
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-import type { 
+import getUsers from '../_shared/wonky.ts';
+import type {
   BotApiPlayer, 
   UpdatePlayerDataRequest, 
   UpdatePlayerDataResponse,
@@ -14,14 +11,17 @@ import {
   createSnapshotSavedEmail,
   createPartialSyncEmail
 } from '../_shared/email-service.ts';
+import { getEnvVariable, getSupabaseClient, type SupabaseClient } from "../_shared/utils.ts";
+import { Database } from "../_shared/database.types.ts";
 
 const BATCH_SIZE = 100;
-function validateDate(date) {
+function validateDate(date: string | null): string | null {
   if (!date) return null;
   const parsed = new Date(date);
   return isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
-function transformPlayer(player, snapshotDate) {
+
+function transformPlayer(player: BotApiPlayer, snapshotDate: string) {
   return {
     snapshot_date: snapshotDate,
     discord_id: player.ID,
@@ -42,7 +42,8 @@ function transformPlayer(player, snapshotDate) {
     max_mystical_eggs: player.maxMysticalEggs || null
   };
 }
-function extractEggdayGains(player) {
+
+function extractEggdayGains(player: BotApiPlayer) {
   if (!player.gains?.eggDay || !Array.isArray(player.gains.eggDay) || player.gains.eggDay.length === 0) {
     return [];
   }
@@ -61,7 +62,13 @@ function extractEggdayGains(player) {
       end_prestiges: eggDay.eggDayEndPrestiges || null
     }));
 }
-async function batchUpsert(supabase, table, data, conflictColumns) {
+async function batchUpsert(
+  supabase: SupabaseClient,
+  table: keyof Database['public']['Tables'],
+  // deno-lint-ignore no-explicit-any
+  data: any[],
+  conflictColumns: string[]
+) {
   const batches = [];
   for(let i = 0; i < data.length; i += BATCH_SIZE){
     batches.push(data.slice(i, i + BATCH_SIZE));
@@ -97,7 +104,7 @@ async function batchUpsert(supabase, table, data, conflictColumns) {
     errors
   };
 }
-async function refreshMaterializedViews(supabase) {
+async function refreshMaterializedViews(supabase: SupabaseClient) {
   console.log('Refreshing materialized views...');
   const { error: refreshError } = await supabase
     .rpc('refresh_materialized_views');
@@ -130,8 +137,8 @@ Deno.serve(async (req)=>{
     // Authentication: Always require either secret token OR service role key
     const secretToken = req.headers.get('x-secret-token');
     const authHeader = req.headers.get('Authorization');
-    const expectedToken = Deno.env.get('SECRET_TOKEN');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const expectedToken = getEnvVariable('SECRET_TOKEN');
+    const serviceRoleKey = getEnvVariable('SUPABASE_SERVICE_ROLE_KEY');
     
     let isAuthenticated = false;
     
@@ -177,7 +184,7 @@ Deno.serve(async (req)=>{
     }
     
     // Create Supabase client with service role for admin access
-    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const supabase = getSupabaseClient();
 
     let players: BotApiPlayer[];
     
@@ -187,11 +194,7 @@ Deno.serve(async (req)=>{
       players = body.players;
     } else {
       console.log('Fetching player data from bot API...');
-      const botResponse = await fetch(Deno.env.get('WONKY_ENDPOINT_URL'));
-      if (!botResponse.ok) {
-        throw new Error(`Bot API returned ${botResponse.status}: ${botResponse.statusText}`);
-      }
-      players = await botResponse.json();
+      players = await getUsers();
     }
     
     console.log(`Received ${players.length} player records`);
@@ -235,7 +238,7 @@ Deno.serve(async (req)=>{
     // Transform players
     const playerSnapshots = players.map((player)=>transformPlayer(player, snapshotDate));
     // Extract eggday gains
-    const allEggdayGains = [];
+    const allEggdayGains: NonNullable<BotApiPlayer['gains']>['eggDay'] = [];
     players.forEach((player)=>{
       const eggdayGains = extractEggdayGains(player);
       allEggdayGains.push(...eggdayGains);
@@ -245,7 +248,11 @@ Deno.serve(async (req)=>{
       'snapshot_date',
       'discord_id'
     ]);
-    let eggdayResult = {
+    let eggdayResult: {
+      successCount: number;
+      errorCount: number;
+      errors: string[] 
+    } = {
       successCount: 0,
       errorCount: 0,
       errors: []
@@ -296,18 +303,21 @@ Deno.serve(async (req)=>{
     
     // Send email notification if enabled
     if (sendEmailFlag) {
-      const resendApiKey = Deno.env.get('RESEND_API_KEY');
-      const notificationEmail = Deno.env.get('NOTIFICATION_EMAIL');
+      const resendApiKey = getEnvVariable('RESEND_API_KEY');
+      const notificationEmail = getEnvVariable('NOTIFICATION_EMAIL');
       
       if (resendApiKey && notificationEmail) {
         try {
-          const emailContext = body.emailContext || {};
+          const emailContext = body.emailContext ?? {
+            syncPercentage: 100,
+            missingPlayers: [],
+            isPartialSync: false
+          };
           const isPartialSync = emailContext.isPartialSync === true;
-          const syncPercentage = emailContext.syncPercentage || 100;
           
           // Create decision object for email template
           const decision: Partial<SnapshotDecision> = {
-            syncPercentage,
+            syncPercentage: emailContext.syncPercentage,
             totalPlayersReceived: players.length,
             totalNonExcludedPlayers: players.length,
             excludedPlayerCount: 0,
@@ -316,7 +326,6 @@ Deno.serve(async (req)=>{
             timeSinceLowestUpdateHours: 0,
             hoursSinceLastSave: 0,
             reason: isPartialSync ? 'Partial sync detected' : 'All conditions met',
-            missingPlayers: emailContext.missingPlayers || [],
             pendingAttemptCount: isPartialSync ? 2 : 0,
           };
           

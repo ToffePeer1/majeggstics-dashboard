@@ -2,6 +2,18 @@
 // Shared Type Definitions
 // ============================================================================
 // Common types used across edge functions for snapshot management
+import { Database } from "./database.types.ts";
+
+// ============================================================================
+// Quick DB types
+// ============================================================================
+
+export type LeaderboardPlayer = Database['public']['Tables']['leaderboard_cache']['Row'];
+
+export type PlayerSnapshot = Database['public']['Tables']['player_snapshots']['Row'];
+export type SnapshotSaveMetadata = Database['public']['Tables']['snapshot_save_metadata']['Row'];
+
+
 
 /**
  * Player data from the Bot API
@@ -129,22 +141,6 @@ export interface EmailResult {
   responseData?: unknown;
 }
 
-/**
- * Snapshot save metadata from database
- */
-export interface SnapshotSaveMetadata {
-  id: number;
-  last_saved_at: string | null;
-  last_decision_at: string;
-  last_decision_result: SnapshotDecision | null;
-  last_email_sent_at: string | null;
-  last_email_type: string | null;
-  pending_sync_data: PendingSyncData | null;
-  pending_sync_first_attempt: string | null;
-  pending_sync_attempt_count: number;
-  pending_sync_metadata: Record<string, unknown> | null;
-  updated_at: string;
-}
 
 /**
  * Update player data request payload

@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 /**
  * Refresh Leaderboard Cron Job Edge Function
  * 
@@ -23,9 +21,7 @@
  * - Only callable via authenticated request
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
-
+import { getEnvVariable, getSupabaseClient, type SupabaseClient } from '../_shared/utils.ts';
 import type { 
   BotApiPlayer, 
   LeaderboardCacheEntry, 
@@ -34,6 +30,7 @@ import type {
   UpdatePlayerDataResponse
 } from '../_shared/types.ts';
 import { verifyJWT, isServiceRole } from '../_shared/auth.ts';
+import getUsers from '../_shared/wonky.ts';
 import { 
   shouldSaveSnapshot, 
   shouldSendWeekNoUpdateAlert,
@@ -44,6 +41,7 @@ import {
   logEmail,
   createWeekNoUpdateEmail
 } from '../_shared/email-service.ts';
+import { Json } from "../_shared/database.types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,17 +52,12 @@ const corsHeaders = {
 const BATCH_SIZE = 100;
 
 /**
- * Fetch data from bot API
+ * Fetch data from bot API via wonky module
  */
-async function fetchFromBotAPI(botApiUrl: string): Promise<BotApiPlayer[]> {
+async function fetchFromBotAPI(): Promise<BotApiPlayer[]> {
   console.log('Fetching fresh data from bot API...');
 
-  const response = await fetch(botApiUrl);
-  if (!response.ok) {
-    throw new Error(`Bot API returned ${response.status}: ${response.statusText}`);
-  }
-
-  const players = await response.json();
+  const players = await getUsers();
 
   if (!Array.isArray(players) || players.length === 0) {
     throw new Error('No player data returned from bot API');
@@ -77,7 +70,7 @@ async function fetchFromBotAPI(botApiUrl: string): Promise<BotApiPlayer[]> {
 /**
  * Get excluded player IDs from database
  */
-async function getExcludedPlayerIds(supabase): Promise<string[]> {
+async function getExcludedPlayerIds(supabase: SupabaseClient): Promise<string[]> {
   const { data, error } = await supabase
     .from('excluded_players')
     .select('discord_id');
@@ -115,7 +108,7 @@ function transformToLeaderboardCache(player: BotApiPlayer): LeaderboardCacheEntr
  * Update leaderboard cache in database
  */
 async function updateLeaderboardCache(
-  supabase,
+  supabase: SupabaseClient,
   players: BotApiPlayer[]
 ): Promise<void> {
   console.log(`Updating leaderboard cache with ${players.length} players...`);
@@ -162,7 +155,7 @@ async function updateLeaderboardCache(
 /**
  * Get snapshot save metadata from database
  */
-async function getSnapshotMetadata(supabase): Promise<SnapshotSaveMetadata | null> {
+async function getSnapshotMetadata(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from('snapshot_save_metadata')
     .select('*')
@@ -181,7 +174,7 @@ async function getSnapshotMetadata(supabase): Promise<SnapshotSaveMetadata | nul
  * Update snapshot save metadata
  */
 async function updateSnapshotMetadata(
-  supabase,
+  supabase: SupabaseClient,
   updates: Partial<SnapshotSaveMetadata>
 ): Promise<void> {
   const { error } = await supabase
@@ -220,7 +213,7 @@ async function callUpdatePlayerData(
   return await response.json();
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -239,14 +232,13 @@ serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const botApiUrl = Deno.env.get('WONKY_ENDPOINT_URL');
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const notificationEmail = Deno.env.get('NOTIFICATION_EMAIL');
-    const jwtSecret = Deno.env.get('JWT_SECRET');
+    const supabaseUrl = getEnvVariable('SUPABASE_URL');
+    const supabaseServiceKey = getEnvVariable('SUPABASE_SERVICE_ROLE_KEY');
+    const resendApiKey = getEnvVariable('RESEND_API_KEY');
+    const notificationEmail = getEnvVariable('NOTIFICATION_EMAIL');
+    const jwtSecret = getEnvVariable('JWT_SECRET');
 
-    if (!jwtSecret || !supabaseUrl || !supabaseServiceKey || !botApiUrl) {
+    if (!jwtSecret || !supabaseUrl || !supabaseServiceKey) {
       throw new Error('Missing required environment variables');
     }
 
@@ -273,10 +265,10 @@ serve(async (req: Request) => {
     console.log(`Timestamp: ${new Date().toISOString()}`);
 
     // Create Supabase client with service role
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = getSupabaseClient();
 
     // Step 1: Fetch fresh data from bot API
-    const players = await fetchFromBotAPI(botApiUrl);
+    const players = await fetchFromBotAPI();
 
     // Step 2: Get excluded player IDs
     const excludedIds = await getExcludedPlayerIds(supabase);
@@ -289,13 +281,13 @@ serve(async (req: Request) => {
     const metadata = await getSnapshotMetadata(supabase);
 
     // Step 5: Evaluate snapshot decision
-    const decision = await shouldSaveSnapshot(players, excludedIds, metadata);
+    const decision = shouldSaveSnapshot(players, excludedIds, metadata);
     console.log('Snapshot decision:', JSON.stringify(decision, null, 2));
 
     // Step 6: Update metadata with decision
     await updateSnapshotMetadata(supabase, {
       last_decision_at: new Date().toISOString(),
-      last_decision_result: decision,
+      last_decision_result: (decision as unknown as Json),
     });
 
     let snapshotResult: UpdatePlayerDataResponse | null = null;
@@ -334,7 +326,7 @@ serve(async (req: Request) => {
       const pendingSyncData = createPendingSyncData(players, decision);
 
       await updateSnapshotMetadata(supabase, {
-        pending_sync_data: pendingSyncData,
+        pending_sync_data: (pendingSyncData as unknown as Json),
         pending_sync_first_attempt: metadata?.pending_sync_first_attempt || new Date().toISOString(),
         pending_sync_attempt_count: decision.pendingAttemptCount,
         pending_sync_metadata: {
