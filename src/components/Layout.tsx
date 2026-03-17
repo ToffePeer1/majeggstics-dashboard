@@ -70,7 +70,7 @@ export default function Layout() {
           padding: '1rem 0',
         }}
       >
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               className="sidebar-toggle"
@@ -89,23 +89,6 @@ export default function Layout() {
             </h1>
           </div>
           
-          {/* Temporary Notice Banner */}
-          <div
-            style={{
-              background: '#dc2626',
-              color: '#ffffff',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.375rem',
-              fontSize: '0.85rem',
-              fontWeight: '600',
-              whiteSpace: 'nowrap',
-              textAlign: 'center',
-            }}
-          >
-            Wonky endpoint broken, live updates unavailable (even if page indicates so) <br />
-            Weekly updates <i>should</i> still work
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {user && (
               <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
