@@ -101,8 +101,10 @@ export function calculatePlayerMER(
 
 export function calculatePlayerJER(
   pe: number,
-  se: number
+  se: number,
+  te: number | null
 ) {
+  const effectivePE = pe + ( te || 0) * Math.log(1.01) / Math.log(1.10);
   const logSE = Math.log10(se);
-  return (((0.1519 * Math.pow(logSE, 3) - 4.8517 * Math.pow(logSE, 2) + 48.248 * logSE - 143.46) / pe)*100*pe+100*49) / (pe + 100);
+  return (((0.1519 * Math.pow(logSE, 3) - 4.8517 * Math.pow(logSE, 2) + 48.248 * logSE - 143.46) / effectivePE)*100*effectivePE+100*49) / (effectivePE + 100);
 }

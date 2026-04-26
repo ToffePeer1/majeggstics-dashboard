@@ -299,7 +299,7 @@ export function useCachedLeaderboard() {
         player.grade = player.grade.toUpperCase();
         // Calculate MER and JER client-side from PE and SE
         player.mer = calculatePlayerMER(player.pe, player.se);
-        player.jer = calculatePlayerJER(player.pe, player.se);
+        player.jer = calculatePlayerJER(player.pe, player.se, player.te);
       }
       return data;
     },
@@ -372,7 +372,7 @@ export function usePlayerCurrentStats(discordId?: string | null) {
         }
         // Calculate MER and JER from PE and SE
         data.player.mer = calculatePlayerMER(data.player.pe, data.player.se);
-        data.player.jer = calculatePlayerJER(data.player.pe, data.player.se);
+        data.player.jer = calculatePlayerJER(data.player.pe, data.player.se, data.player.te);
       }
       
       return data;

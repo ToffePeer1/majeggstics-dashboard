@@ -35,7 +35,7 @@ export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
   // Calculate JER if not present or invalid
   if (processed.jer == null || isNaN(processed.jer)) {
     if (processed.pe != null && processed.se != null) {
-      processed.jer = calculatePlayerJER(processed.pe, processed.se);
+      processed.jer = calculatePlayerJER(processed.pe, processed.se, processed.te);
     } else {
       processed.jer = 0;
     }
