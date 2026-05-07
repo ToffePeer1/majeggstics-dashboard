@@ -76,12 +76,22 @@ npm run validate
 └── .env.example          # Environment variable template
 ```
 
+## Deployment
+
+The project uses Vercel's native Git integration for deployments:
+- **Preview deployments** are created automatically for every branch and PR
+- **Production deployment** requires manual promotion in the Vercel Dashboard
+- GitHub Actions CI ensures code quality (typecheck, lint, build) on all branches
+
+For detailed information, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Pull Requests
 
 - Test your changes locally
 - Run `npm run validate` (must pass)
 - Write a clear description of what changed
 - Backend/infrastructure changes need coordination with me
+- Preview deployments will be automatically created for your PR
 
 ## License
 
