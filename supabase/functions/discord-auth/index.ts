@@ -66,7 +66,7 @@ interface DiscordGuildMember {
   nick?: string | null;
 }
 
-type AccessLevel = 'user' | 'admin';
+type AccessLevel = 'user' | 'admin' | 'owner';
 
 interface AuthRequest {
   code: string;
@@ -177,21 +177,29 @@ async function fetchGuildMember(
  * Returns null if user doesn't have required access
  * User can access if they have either MAJ role or YC role
  * YC role grants admin access automatically
+ * Owner Discord ID (server-side only env var) grants owner access
  */
 function determineAccessLevel(
   member: DiscordGuildMember | null,
+  discordUserId: string,
   majRoleId: string,
   ycRoleId: string,
-  adminRoleId: string
+  adminRoleId: string,
+  ownerDiscordId: string | null,
 ): AccessLevel | null {
   if (!member || !member.roles) {
     return null;
   }
 
+  // Owner check takes priority — ID never exposed to the client
+  if (ownerDiscordId && discordUserId === ownerDiscordId) {
+    return 'owner';
+  }
+
   // Check if user has either the MAJ role or the YC (Yellow Car) role
   const hasMajRole = member.roles.includes(majRoleId);
   const hasYcRole = member.roles.includes(ycRoleId);
-  
+
   if (!hasMajRole && !hasYcRole) {
     return null;
   }
@@ -281,6 +289,7 @@ function validateEnvironment(): {
   majRoleId: string;
   ycRoleId: string;
   adminRoleId: string;
+  ownerDiscordId: string | null;
 } {
   const vars = {
     clientId:     'DISCORD_CLIENT_ID',
@@ -293,13 +302,18 @@ function validateEnvironment(): {
     adminRoleId:  'EGGINC_WONKY_LEADER_ROLE',
   } as const;
 
-  return Object.fromEntries(
+  const required = Object.fromEntries(
     Object.entries(vars).map(([key, envKey]) => {
       const value = getEnvVariable(envKey);
       if (!value) throw new Error(`Missing ${envKey} environment variable`);
       return [key, value];
     })
-  ) as ReturnType<typeof validateEnvironment>;
+  ) as Omit<ReturnType<typeof validateEnvironment>, 'ownerDiscordId'>;
+
+  return {
+    ...required,
+    ownerDiscordId: Deno.env.get('OWNER_DISCORD_ID') ?? null,
+  };
 }
 
 Deno.serve(async (req: Request) => {
@@ -321,7 +335,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Validate environment variables
-    const { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId } = validateEnvironment();
+    const { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId, ownerDiscordId } = validateEnvironment();
 
     // Parse request body
     const body: AuthRequest = await req.json();
@@ -366,7 +380,7 @@ Deno.serve(async (req: Request) => {
 
     // Step 3: Check guild membership and roles
     const guildMember = await fetchGuildMember(tokenResponse.access_token, guildId);
-    const accessLevel = determineAccessLevel(guildMember, majRoleId, ycRoleId, adminRoleId);
+    const accessLevel = determineAccessLevel(guildMember, discordUser.id, majRoleId, ycRoleId, adminRoleId, ownerDiscordId);
 
     if (!accessLevel) {
       console.log('User does not have required access:', discordUser.id);

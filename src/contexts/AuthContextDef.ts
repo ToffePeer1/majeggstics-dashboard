@@ -7,6 +7,7 @@ export interface AuthContextType extends AuthState {
   handleAuthCallback: (code: string) => Promise<void>;
   logout: () => void;
   isAdmin: () => boolean;
+  isOwner: () => boolean;
   getAuthenticatedClient: () => ReturnType<typeof createAuthenticatedClient> | null;
 }
 

@@ -5,7 +5,7 @@ import { PAGE_TITLE } from '@/config/constants';
 import { getDiscordAvatarUrl } from '@/services/permissions';
 
 export default function Layout() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isOwner, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -102,7 +102,7 @@ export default function Layout() {
                 <div className="user-details">
                   <div style={{ fontWeight: '500' }}>{username}</div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                    {isAdmin() ? 'Admin' : 'User'}
+                    {isOwner() ? 'Owner' : isAdmin() ? 'Admin' : 'User'}
                   </div>
                 </div>
               </div>
@@ -147,6 +147,11 @@ export default function Layout() {
                 <NavLink to="/player-comparison">
                   Player Comparison
                 </NavLink>
+                {isOwner() && (
+                  <NavLink to="/owner">
+                    Owner Panel
+                  </NavLink>
+                )}
               </>
             ) : (
               <>

@@ -11,6 +11,7 @@ import Leaderboards from '@/pages/Leaderboards';
 import WeeklyTrends from '@/pages/WeeklyTrends';
 import PlayerComparison from '@/pages/PlayerComparison';
 import MyStats from '@/pages/MyStats';
+import OwnerPanel from '@/pages/OwnerPanel';
 import '@/styles/index.css';
 
 const queryClient = new QueryClient({
@@ -22,14 +23,26 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
-  const { isAuthenticated, isAdmin } = useAuth();
+function ProtectedRoute({
+  children,
+  adminOnly = false,
+  ownerOnly = false,
+}: {
+  children: React.ReactNode;
+  adminOnly?: boolean;
+  ownerOnly?: boolean;
+}) {
+  const { isAuthenticated, isAdmin, isOwner } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
   if (adminOnly && !isAdmin()) {
+    return <Navigate to="/my-stats" replace />;
+  }
+
+  if (ownerOnly && !isOwner()) {
     return <Navigate to="/my-stats" replace />;
   }
 
@@ -90,6 +103,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <MyStats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner"
+          element={
+            <ProtectedRoute ownerOnly>
+              <OwnerPanel />
             </ProtectedRoute>
           }
         />

@@ -190,7 +190,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Access level is determined by the Edge Function based on Discord roles
    */
   const isAdmin = useCallback((): boolean => {
-    return authState.accessLevel === 'admin';
+    return authState.accessLevel === 'admin' || authState.accessLevel === 'owner';
+  }, [authState.accessLevel]);
+
+  const isOwner = useCallback((): boolean => {
+    return authState.accessLevel === 'owner';
   }, [authState.accessLevel]);
 
   /**
@@ -225,6 +229,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         handleAuthCallback,
         logout,
         isAdmin,
+        isOwner,
         getAuthenticatedClient,
       }}
     >

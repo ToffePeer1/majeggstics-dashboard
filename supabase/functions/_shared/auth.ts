@@ -9,7 +9,7 @@ import { verify } from 'jwt';
 export interface UserJWTPayload {
   sub: string;
   discord_id: string;
-  access_level: 'user' | 'admin';
+  access_level: 'user' | 'admin' | 'owner';
   exp: number;
   iat: number;
 }
@@ -72,5 +72,10 @@ export function isServiceRole(payload: UserJWTPayload | ServiceRoleJWTPayload | 
  * Check if JWT payload is from an admin user
  */
 export function isAdmin(payload: UserJWTPayload | ServiceRoleJWTPayload | null): payload is UserJWTPayload {
-  return payload !== null && 'access_level' in payload && payload.access_level === 'admin';
+  return payload !== null && 'access_level' in payload &&
+    (payload.access_level === 'admin' || payload.access_level === 'owner');
+}
+
+export function isOwner(payload: UserJWTPayload | ServiceRoleJWTPayload | null): payload is UserJWTPayload {
+  return payload !== null && 'access_level' in payload && payload.access_level === 'owner';
 }

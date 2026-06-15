@@ -46,7 +46,7 @@ export interface DiscordUser {
 export interface DiscordAuthResponse {
   jwt: string;
   user: DiscordUser;
-  access_level: 'user' | 'admin';
+  access_level: 'user' | 'admin' | 'owner';
   expires_at: number;
 }
 
@@ -70,7 +70,7 @@ export interface JWTPayload {
   iat: number;
   exp: number;
   discord_id: string;
-  access_level: 'user' | 'admin';
+  access_level: 'user' | 'admin' | 'owner';
   user_metadata?: {
     discord_username?: string;
     discord_global_name?: string | null;
@@ -86,7 +86,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   user: DiscordUser | null;
   session: Session | null;
-  accessLevel: 'admin' | 'user' | null;
+  accessLevel: 'admin' | 'user' | 'owner' | null;
   discordId: string | null;
   isLoading: boolean;
   jwt: string | null;
@@ -98,7 +98,7 @@ export interface PlayerListItem {
   discordId: string;
 }
 
-export type AccessLevel = 'admin' | 'user';
+export type AccessLevel = 'admin' | 'user' | 'owner';
 
 export interface ChartData {
   snapshot_date: Date;
