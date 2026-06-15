@@ -1,6 +1,3 @@
 {
-  "imports": {
-    "supabase": "jsr:@supabase/supabase-js@2",
-    "jwt": "https://deno.land/x/djwt@v2.8/mod.ts"
-  }
+  "importMap": "../../deno.json"
 }
