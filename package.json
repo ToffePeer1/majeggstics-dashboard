@@ -13,7 +13,9 @@
     "typecheck:app": "tsc --noEmit -p tsconfig.json",
     "typecheck:deno": "deno check --quiet --config supabase/deno.json supabase/functions/**/*.ts",
     "typecheck": "npm run typecheck:app && npm run typecheck:deno",
-    "validate": "npm run lint && npm run typecheck"
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "npm run format:check && npm run lint && npm run typecheck"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
@@ -37,8 +39,10 @@
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.26",
+    "prettier": "^3.8.4",
     "supabase": "^2.67.0",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.61.0",
