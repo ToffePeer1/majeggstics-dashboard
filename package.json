@@ -26,7 +26,7 @@
     "react-router-dom": "^6.21.1"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.4",
     "@types/eslint": "^9.6.1",
     "@types/node": "^20.10.6",
     "@types/plotly.js": "^2.35.13",
@@ -37,7 +37,7 @@
     "@typescript-eslint/parser": "^8.49.0",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.26",
     "supabase": "^2.67.0",
     "typescript": "^5.3.3",
