@@ -13,21 +13,24 @@ interface ProgressionChartProps {
   showDataLossNote?: boolean; // Whether to show data loss note for prestiges
 }
 
-function generateTickValues(data: Array<{ value: number | null }>, useLogScale: boolean): number[] | null {
-  const values = data.map(d => d.value).filter((v): v is number => v != null && !isNaN(v));
+function generateTickValues(
+  data: Array<{ value: number | null }>,
+  useLogScale: boolean
+): number[] | null {
+  const values = data.map((d) => d.value).filter((v): v is number => v != null && !isNaN(v));
   if (values.length === 0) return null;
-  
+
   const yMin = Math.min(...values);
   const yMax = Math.max(...values);
-  
+
   if (useLogScale) {
     // For log scale, create ticks at powers of 10
     if (yMin <= 0 || yMax <= 0) return null;
-    
+
     const logMin = Math.floor(Math.log10(Math.max(yMin, 1e-100)));
     const logMax = Math.ceil(Math.log10(yMax));
     const ticks: number[] = [];
-    
+
     for (let i = logMin; i <= logMax; i++) {
       ticks.push(Math.pow(10, i));
     }
@@ -37,7 +40,7 @@ function generateTickValues(data: Array<{ value: number | null }>, useLogScale: 
     const numTicks = 8;
     const step = (yMax - yMin) / (numTicks - 1);
     const ticks: number[] = [];
-    
+
     for (let i = 0; i < numTicks; i++) {
       ticks.push(yMin + step * i);
     }
@@ -65,19 +68,27 @@ export default function ProgressionChart({
   if (!data || data.length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-        No data available for this metric. The selected statistic may not have been tracked during this period.
+        No data available for this metric. The selected statistic may not have been tracked during
+        this period.
       </div>
     );
   }
 
   // Auto-detect if this is EB based on title
-  const detectIsEb = isEb || yAxisTitle.toLowerCase().includes('eb') || title.toLowerCase().includes('earnings bonus');
-  const detectIsInteger = isInteger || ['prestige', 'pe', 'te'].some(t => yAxisTitle.toLowerCase().includes(t));
-  const shouldShowNote = showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
+  const detectIsEb =
+    isEb ||
+    yAxisTitle.toLowerCase().includes('eb') ||
+    title.toLowerCase().includes('earnings bonus');
+  const detectIsInteger =
+    isInteger || ['prestige', 'pe', 'te'].some((t) => yAxisTitle.toLowerCase().includes(t));
+  const shouldShowNote =
+    showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
 
   // Generate formatted y-axis ticks
   const tickvals = formatYAxis ? generateTickValues(data, useLogScale) : null;
-  const ticktext = tickvals ? tickvals.map(v => formatTickLabel(v, detectIsEb, detectIsInteger)) : undefined;
+  const ticktext = tickvals
+    ? tickvals.map((v) => formatTickLabel(v, detectIsEb, detectIsInteger))
+    : undefined;
 
   // Split data into segments where gaps > 3 weeks don't connect or where values are null
   const GAP_THRESHOLD_MS = 3 * 7 * 24 * 60 * 60 * 1000; // 3 weeks in milliseconds
@@ -116,10 +127,10 @@ export default function ProgressionChart({
 
   // Create traces for each segment
   const traces = segments.map((segment, idx) => {
-    const hoverText = segment.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
+    const hoverText = segment.map((d) => formatTickLabel(d.value, detectIsEb, detectIsInteger));
     return {
-      x: segment.map(d => d.snapshot_date),
-      y: segment.map(d => d.value),
+      x: segment.map((d) => d.snapshot_date),
+      y: segment.map((d) => d.value),
       type: 'scatter' as const,
       mode: (showMarkers ? 'lines+markers' : 'lines') as 'lines+markers' | 'lines',
       name: yAxisTitle,
@@ -147,11 +158,13 @@ export default function ProgressionChart({
           yaxis: {
             title: yAxisTitle,
             type: useLogScale ? 'log' : 'linear',
-            ...(tickvals && ticktext ? {
-              tickmode: 'array' as const,
-              tickvals: tickvals,
-              ticktext: ticktext,
-            } : {}),
+            ...(tickvals && ticktext
+              ? {
+                  tickmode: 'array' as const,
+                  tickvals: tickvals,
+                  ticktext: ticktext,
+                }
+              : {}),
           },
           legend: {
             orientation: 'h',
@@ -175,11 +188,20 @@ export default function ProgressionChart({
         style={{ width: '100%' }}
       />
       {shouldShowNote && (
-        <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
-          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+        <p
+          style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#fef3c7',
+            borderLeft: '4px solid #f59e0b',
+            fontSize: '0.9rem',
+            color: '#92400e',
+          }}
+        >
+          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss
+          of data.
         </p>
       )}
     </>
   );
 }
-

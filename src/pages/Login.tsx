@@ -4,15 +4,15 @@ import { PAGE_TITLE } from '@/config/constants';
 
 /**
  * Login Page
- * 
+ *
  * Initiates Discord OAuth flow with minimal permissions.
  * We only request the 'identify' scope, which provides:
  * - Discord user ID
  * - Username
  * - Avatar
- * 
+ *
  * No email, guilds, or other sensitive data is requested.
- * 
+ *
  * SECURITY MODEL:
  * 1. User clicks login → Redirect to Discord
  * 2. User authorizes app → Discord redirects back with code
@@ -43,9 +43,7 @@ export default function Login() {
     >
       <div className="card" style={{ maxWidth: '500px', width: '100%', margin: '1rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-            {PAGE_TITLE}
-          </h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{PAGE_TITLE}</h1>
           <p style={{ color: 'var(--color-text-secondary)' }}>
             Please log in with your Discord account to access the dashboard.
           </p>
@@ -54,8 +52,12 @@ export default function Login() {
         <div className="info-message" style={{ marginBottom: '1.5rem' }}>
           <strong>Requirements:</strong>
           <ul style={{ marginTop: '0.5rem', paddingLeft: '1.5rem' }}>
-            <li>Must be a member of the <strong>Egg Inc Discord server</strong></li>
-            <li>Must have the <strong>Majeggstics role</strong></li>
+            <li>
+              Must be a member of the <strong>Egg Inc Discord server</strong>
+            </li>
+            <li>
+              Must have the <strong>Majeggstics role</strong>
+            </li>
           </ul>
         </div>
 
@@ -79,7 +81,13 @@ export default function Login() {
           <summary style={{ cursor: 'pointer', fontWeight: '500', marginBottom: '0.5rem' }}>
             ℹ️ About Authentication
           </summary>
-          <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '1rem' }}>
+          <div
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--color-text-secondary)',
+              marginTop: '1rem',
+            }}
+          >
             <h4>How it works</h4>
             <ol style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
               <li>Click "Login with Discord" to be redirected to Discord</li>
@@ -103,9 +111,9 @@ export default function Login() {
             <h4 style={{ marginTop: '1rem' }}>Security Model</h4>
             <p style={{ marginTop: '0.5rem' }}>
               Your session is secured using industry-standard JWT (JSON Web Tokens) with
-              cryptographic signatures. Even though you can see your token in browser storage,
-              it cannot be modified without invalidating the signature. All data access is
-              protected by Row Level Security policies that verify your identity on every request.
+              cryptographic signatures. Even though you can see your token in browser storage, it
+              cannot be modified without invalidating the signature. All data access is protected by
+              Row Level Security policies that verify your identity on every request.
             </p>
           </div>
         </details>

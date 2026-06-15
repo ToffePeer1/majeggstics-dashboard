@@ -1,14 +1,14 @@
 // Configuration constants for the application
 
-export const PAGE_TITLE = 'Majeggstics Dashboard'
+export const PAGE_TITLE = 'Majeggstics Dashboard';
 
 // Database table names
-export const TABLE_PLAYER_SNAPSHOTS = 'player_snapshots'
-export const TABLE_SNAPSHOT_METADATA = 'snapshot_metadata'
-export const TABLE_WEEKLY_STATISTICS = 'weekly_statistics'
+export const TABLE_PLAYER_SNAPSHOTS = 'player_snapshots';
+export const TABLE_SNAPSHOT_METADATA = 'snapshot_metadata';
+export const TABLE_WEEKLY_STATISTICS = 'weekly_statistics';
 
 // Materialized views
-export const VIEW_UNIQUE_PLAYERS_LATEST = 'unique_players_latest'
+export const VIEW_UNIQUE_PLAYERS_LATEST = 'unique_players_latest';
 
 // CSV Export Headers - Used for exporting player snapshot data
 export const CSV_EXPORT_HEADERS = [
@@ -21,14 +21,14 @@ export const CSV_EXPORT_HEADERS = [
   'farmer_role',
   'grade',
   'active',
-] as const
+] as const;
 
 // Cache TTLs (in milliseconds)
 export const CACHE_TTL = {
   PLAYER_LIST: 3_600_000, // 1 hour
   LATEST_SNAPSHOT: 3_600_000, // 1 hour
   PLAYER_DATA: 3_600_000, // 1 hour
-}
+};
 
 // Environment variables with fallbacks
 export const ENV = {
@@ -39,7 +39,7 @@ export const ENV = {
   MAJ_ROLE: import.meta.env.VITE_EGGINC_MAJ_ROLE || '',
   // Discord OAuth configuration
   DISCORD_CLIENT_ID: import.meta.env.VITE_DISCORD_CLIENT_ID || '',
-} as const
+} as const;
 
 // Discord OAuth Configuration
 // SECURITY NOTE: CLIENT_SECRET is NEVER exposed to the frontend
@@ -63,7 +63,7 @@ export const DISCORD_CONFIG = {
 
   // JWT expiration buffer (refresh 1 hour before expiry)
   EXPIRATION_BUFFER_MS: 60 * 60 * 1000,
-} as const
+} as const;
 
 // Edge Function endpoints
 export const EDGE_FUNCTIONS = {
@@ -72,7 +72,7 @@ export const EDGE_FUNCTIONS = {
   GET_PLAYER_CURRENT_STATS: '/functions/v1/get-player-current-stats',
   OWNER_ACTIONS: '/functions/v1/owner-actions',
   DELETE_SNAPSHOT: '/functions/v1/delete-snapshot',
-} as const
+} as const;
 
 // Grade colors for charts
 export const GRADE_COLORS = {
@@ -81,9 +81,9 @@ export const GRADE_COLORS = {
   A: '#9a08d5',
   B: '#3f88c7',
   C: '#b8b8b8',
-} as const
+} as const;
 
-export const GRADES = ['AAA', 'AA', 'A', 'B', 'C'] as const
+export const GRADES = ['AAA', 'AA', 'A', 'B', 'C'] as const;
 
 // Metric options for charts and visualizations
 export const METRIC_OPTIONS = {
@@ -94,6 +94,6 @@ export const METRIC_OPTIONS = {
   mer: 'Mystical Egg Ratio (MER)',
   jer: "Jer's Egg Ratio (JER)",
   num_prestiges: 'Number of Prestiges',
-} as const
+} as const;
 
-export type MetricKey = keyof typeof METRIC_OPTIONS
+export type MetricKey = keyof typeof METRIC_OPTIONS;

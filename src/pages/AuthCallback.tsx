@@ -4,13 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Auth Callback Page
- * 
+ *
  * Handles the OAuth callback from Discord:
  * 1. Extracts the authorization code from URL params
  * 2. Sends code to Edge Function via handleAuthCallback
  * 3. Edge Function exchanges code for Discord token and creates JWT
  * 4. On success, redirects to dashboard
- * 
+ *
  * SECURITY NOTE:
  * The authorization code is a one-time use token from Discord.
  * It can only be exchanged for an access token using the CLIENT_SECRET,
@@ -29,7 +29,7 @@ export default function AuthCallback() {
     const processCallback = async () => {
       // Prevent double processing - use refs to avoid re-triggering effect
       if (isProcessingRef.current || hasProcessedRef.current) return;
-      
+
       // If already authenticated, redirect to home
       if (isAuthenticated) {
         navigate('/', { replace: true });
@@ -60,7 +60,7 @@ export default function AuthCallback() {
       try {
         // Exchange code for JWT via Edge Function
         await handleAuthCallback(code);
-        
+
         // Success! Redirect to home
         navigate('/', { replace: true });
       } catch (err) {
@@ -80,8 +80,9 @@ export default function AuthCallback() {
 
   // Error state
   if (error) {
-    const isAccessDenied = error.includes('member of the Majeggstics') || error.includes('Majeggstics role');
-    
+    const isAccessDenied =
+      error.includes('member of the Majeggstics') || error.includes('Majeggstics role');
+
     return (
       <div
         style={{
@@ -112,20 +113,21 @@ export default function AuthCallback() {
             </div>
           )}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button
-              onClick={() => navigate('/login')}
-              className="button button-primary"
-            >
+            <button onClick={() => navigate('/login')} className="button button-primary">
               Return to Login
             </button>
           </div>
-          
+
           {!isAccessDenied && (
             <details style={{ marginTop: '2rem', textAlign: 'left' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: '500' }}>
-                Troubleshooting
-              </summary>
-              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '1rem' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: '500' }}>Troubleshooting</summary>
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--color-text-secondary)',
+                  marginTop: '1rem',
+                }}
+              >
                 <p>If you're having trouble logging in:</p>
                 <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
                   <li>Make sure you authorized the correct Discord account</li>

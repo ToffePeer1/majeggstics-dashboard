@@ -1,14 +1,14 @@
 /**
  * Get Leaderboard Edge Function
- * 
+ *
  * This edge function provides cached leaderboard data with automatic refresh.
- * 
+ *
  * CACHING STRATEGY:
  * =================
  * 1. Check if cached data exists and is fresh (< 15 minutes old)
  * 2. If fresh: return cached data from database
  * 3. If stale: fetch from BOT_API, update cache, return fresh data
- * 
+ *
  * SECURITY:
  * =========
  * - Requires valid JWT (same as discord-auth)
@@ -19,7 +19,7 @@
 import { verify } from 'jwt';
 import getUsers from '../_shared/wonky.ts';
 import { getEnvVariable, getSupabaseClient, type SupabaseClient } from '../_shared/utils.ts';
-import { type LeaderboardPlayer } from "../_shared/types.ts";
+import { type LeaderboardPlayer } from '../_shared/types.ts';
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -123,10 +123,7 @@ async function fetchFromBotAPI(): Promise<LeaderboardPlayer[]> {
 /**
  * Update the cache in the database
  */
-async function updateCache(
-  supabase: SupabaseClient,
-  players: LeaderboardPlayer[]
-): Promise<void> {
+async function updateCache(supabase: SupabaseClient, players: LeaderboardPlayer[]): Promise<void> {
   console.log(`Updating cache with ${players.length} players...`);
 
   // Clear existing cache and insert new data
@@ -145,9 +142,7 @@ async function updateCache(
   const BATCH_SIZE = 100;
   for (let i = 0; i < players.length; i += BATCH_SIZE) {
     const batch = players.slice(i, i + BATCH_SIZE);
-    const { error: insertError } = await supabase
-      .from('leaderboard_cache')
-      .insert(batch);
+    const { error: insertError } = await supabase.from('leaderboard_cache').insert(batch);
 
     if (insertError) {
       console.error(`Failed to insert batch ${i / BATCH_SIZE + 1}:`, insertError);
@@ -156,12 +151,10 @@ async function updateCache(
   }
 
   // Update the cache metadata
-  const { error: metaError } = await supabase
-    .from('leaderboard_cache_metadata')
-    .upsert({
-      id: 1, // Single row table
-      last_updated: new Date().toISOString(),
-    });
+  const { error: metaError } = await supabase.from('leaderboard_cache_metadata').upsert({
+    id: 1, // Single row table
+    last_updated: new Date().toISOString(),
+  });
 
   if (metaError) {
     console.error('Failed to update cache metadata:', metaError);
@@ -234,7 +227,7 @@ function filterByAccessLevel(
   }
 
   // For regular users, set num_prestiges to null
-  return players.map(player => ({
+  return players.map((player) => ({
     ...player,
     num_prestiges: null,
   }));
@@ -248,13 +241,10 @@ Deno.serve(async (req: Request) => {
 
   // Only accept GET requests
   if (req.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -272,24 +262,18 @@ Deno.serve(async (req: Request) => {
     const jwtPayload = await verifyJWT(authHeader, jwtSecret);
 
     if (!jwtPayload) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid or missing JWT' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid or missing JWT' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check JWT expiration
     if (jwtPayload.exp && jwtPayload.exp < Date.now() / 1000) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: JWT expired' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized: JWT expired' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const accessLevel = jwtPayload.access_level || 'user';

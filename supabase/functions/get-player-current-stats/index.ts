@@ -1,11 +1,11 @@
 /**
  * Get Player Current Stats Edge Function
- * 
+ *
  * This edge function provides a player's current stats from the leaderboard cache.
  * Can be used for:
  * - User viewing their own stats (discord_id from JWT)
  * - Admin viewing any player's stats (discord_id from query parameter)
- * 
+ *
  * SECURITY:
  * =========
  * - Requires valid JWT (same as discord-auth)
@@ -14,7 +14,7 @@
  * - Validates access_level from JWT
  * - Admins see num_prestiges, regular users get null for that field
  * - Uses service role key to bypass RLS for cache access
- * 
+ *
  * PERFORMANCE:
  * ============
  * - Single row query (WHERE discord_id = ?) is instant (PRIMARY KEY)
@@ -129,7 +129,7 @@ function filterByAccessLevel(
   targetDiscordId: string
 ): LeaderboardPlayer | null {
   if (!player) return null;
-  
+
   if (accessLevel === 'admin') {
     return player;
   }
@@ -154,13 +154,10 @@ Deno.serve(async (req: Request) => {
 
   // Only accept GET requests
   if (req.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -178,24 +175,18 @@ Deno.serve(async (req: Request) => {
     const jwtPayload = await verifyJWT(authHeader, jwtSecret);
 
     if (!jwtPayload) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Invalid or missing JWT' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid or missing JWT' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Check JWT expiration
     if (jwtPayload.exp && jwtPayload.exp < Date.now() / 1000) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: JWT expired' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Unauthorized: JWT expired' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const discordId = jwtPayload.discord_id;
@@ -208,12 +199,12 @@ Deno.serve(async (req: Request) => {
 
     // Determine which player to query
     let discordIdToQuery: string;
-    
+
     if (targetDiscordId) {
       // Requesting another player's stats - only admins can do this
       if (accessLevel !== 'admin') {
         return new Response(
-          JSON.stringify({ error: 'Forbidden: Only admins can view other players\' stats' }),
+          JSON.stringify({ error: "Forbidden: Only admins can view other players' stats" }),
           {
             status: 403,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

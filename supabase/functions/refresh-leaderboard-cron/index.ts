@@ -1,8 +1,8 @@
 /**
  * Refresh Leaderboard Cron Job Edge Function
- * 
+ *
  * This edge function is triggered every 15 minutes by pg_cron.
- * 
+ *
  * WORKFLOW:
  * =========
  * 1. Verify JWT authorization (bearer token from cron job)
@@ -13,7 +13,7 @@
  * 6. If conditions met: call update-player-data internally
  * 7. Update snapshot_save_metadata with decision
  * 8. Check for week-no-update alert
- * 
+ *
  * SECURITY:
  * =========
  * - Requires valid JWT in Authorization header
@@ -22,26 +22,22 @@
  */
 
 import { getEnvVariable, getSupabaseClient, type SupabaseClient } from '../_shared/utils.ts';
-import type { 
-  BotApiPlayer, 
-  LeaderboardCacheEntry, 
+import type {
+  BotApiPlayer,
+  LeaderboardCacheEntry,
   SnapshotSaveMetadata,
   UpdatePlayerDataRequest,
-  UpdatePlayerDataResponse
+  UpdatePlayerDataResponse,
 } from '../_shared/types.ts';
 import { verifyJWT, isServiceRole } from '../_shared/auth.ts';
 import getUsers from '../_shared/wonky.ts';
-import { 
-  shouldSaveSnapshot, 
+import {
+  shouldSaveSnapshot,
   shouldSendWeekNoUpdateAlert,
-  createPendingSyncData
+  createPendingSyncData,
 } from '../_shared/snapshot-logic.ts';
-import { 
-  sendEmail, 
-  logEmail,
-  createWeekNoUpdateEmail
-} from '../_shared/email-service.ts';
-import { Json } from "../_shared/database.types.ts";
+import { sendEmail, logEmail, createWeekNoUpdateEmail } from '../_shared/email-service.ts';
+import { Json } from '../_shared/database.types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,16 +67,14 @@ async function fetchFromBotAPI(): Promise<BotApiPlayer[]> {
  * Get excluded player IDs from database
  */
 async function getExcludedPlayerIds(supabase: SupabaseClient): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('excluded_players')
-    .select('discord_id');
+  const { data, error } = await supabase.from('excluded_players').select('discord_id');
 
   if (error) {
     console.error('Failed to fetch excluded players:', error);
     return [];
   }
 
-  return (data || []).map(row => row.discord_id);
+  return (data || []).map((row) => row.discord_id);
 }
 
 /**
@@ -128,9 +122,7 @@ async function updateLeaderboardCache(
   // Insert new data in batches
   for (let i = 0; i < cacheEntries.length; i += BATCH_SIZE) {
     const batch = cacheEntries.slice(i, i + BATCH_SIZE);
-    const { error: insertError } = await supabase
-      .from('leaderboard_cache')
-      .insert(batch);
+    const { error: insertError } = await supabase.from('leaderboard_cache').insert(batch);
 
     if (insertError) {
       throw new Error(`Failed to insert cache batch: ${insertError.message}`);
@@ -138,12 +130,10 @@ async function updateLeaderboardCache(
   }
 
   // Update cache metadata
-  const { error: metaError } = await supabase
-    .from('leaderboard_cache_metadata')
-    .upsert({
-      id: 1,
-      last_updated: new Date().toISOString(),
-    });
+  const { error: metaError } = await supabase.from('leaderboard_cache_metadata').upsert({
+    id: 1,
+    last_updated: new Date().toISOString(),
+  });
 
   if (metaError) {
     console.warn('Failed to update cache metadata:', metaError);
@@ -177,10 +167,7 @@ async function updateSnapshotMetadata(
   supabase: SupabaseClient,
   updates: Partial<SnapshotSaveMetadata>
 ): Promise<void> {
-  const { error } = await supabase
-    .from('snapshot_save_metadata')
-    .update(updates)
-    .eq('id', 1);
+  const { error } = await supabase.from('snapshot_save_metadata').update(updates).eq('id', 1);
 
   if (error) {
     console.error('Failed to update snapshot metadata:', error);
@@ -199,7 +186,7 @@ async function callUpdatePlayerData(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${serviceRoleKey}`,
+      Authorization: `Bearer ${serviceRoleKey}`,
       'x-internal-call': 'true',
     },
     body: JSON.stringify(request),
@@ -221,13 +208,10 @@ Deno.serve(async (req: Request) => {
 
   // Only accept POST
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -245,12 +229,12 @@ Deno.serve(async (req: Request) => {
     // Verify service role JWT authentication
     const authHeader = req.headers.get('Authorization');
     const jwtPayload = await verifyJWT(authHeader, jwtSecret);
-    
+
     if (!jwtPayload || !isServiceRole(jwtPayload)) {
       console.error('Authentication failed: Invalid or non-service-role JWT');
       return new Response(
-        JSON.stringify({ 
-          error: 'Unauthorized: This endpoint requires service role JWT' 
+        JSON.stringify({
+          error: 'Unauthorized: This endpoint requires service role JWT',
         }),
         {
           status: 401,
@@ -258,7 +242,7 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
-    
+
     console.log('Authenticated via service_role JWT');
 
     console.log('=== Refresh Leaderboard Cron Started ===');
@@ -287,7 +271,7 @@ Deno.serve(async (req: Request) => {
     // Step 6: Update metadata with decision
     await updateSnapshotMetadata(supabase, {
       last_decision_at: new Date().toISOString(),
-      last_decision_result: (decision as unknown as Json),
+      last_decision_result: decision as unknown as Json,
     });
 
     let snapshotResult: UpdatePlayerDataResponse | null = null;
@@ -326,8 +310,9 @@ Deno.serve(async (req: Request) => {
       const pendingSyncData = createPendingSyncData(players, decision);
 
       await updateSnapshotMetadata(supabase, {
-        pending_sync_data: (pendingSyncData as unknown as Json),
-        pending_sync_first_attempt: metadata?.pending_sync_first_attempt || new Date().toISOString(),
+        pending_sync_data: pendingSyncData as unknown as Json,
+        pending_sync_first_attempt:
+          metadata?.pending_sync_first_attempt || new Date().toISOString(),
         pending_sync_attempt_count: decision.pendingAttemptCount,
         pending_sync_metadata: {
           syncPercentage: decision.syncPercentage,
@@ -382,12 +367,14 @@ Deno.serve(async (req: Request) => {
         isPendingSync: decision.isPendingSync,
       },
       snapshotSaved: decision.shouldSave,
-      snapshotResult: snapshotResult ? {
-        snapshotDate: snapshotResult.snapshotDate,
-        playerCount: snapshotResult.playerCount,
-        snapshotsInserted: snapshotResult.snapshots.inserted,
-        emailSent: snapshotResult.emailSent,
-      } : null,
+      snapshotResult: snapshotResult
+        ? {
+            snapshotDate: snapshotResult.snapshotDate,
+            playerCount: snapshotResult.playerCount,
+            snapshotsInserted: snapshotResult.snapshots.inserted,
+            emailSent: snapshotResult.emailSent,
+          }
+        : null,
     };
 
     console.log('=== Refresh Leaderboard Cron Completed ===');
@@ -402,8 +389,8 @@ Deno.serve(async (req: Request) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     return new Response(
-      JSON.stringify({ 
-        error: 'Cron job failed', 
+      JSON.stringify({
+        error: 'Cron job failed',
         details: errorMessage,
         timestamp: new Date().toISOString(),
       }),

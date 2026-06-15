@@ -1,11 +1,11 @@
 /**
  * Discord OAuth Edge Function
- * 
+ *
  * SECURITY MODEL:
  * ================
  * This Edge Function is the ONLY place where JWTs are signed. The JWT secret
  * is stored as an environment variable and NEVER exposed to the client.
- * 
+ *
  * Flow:
  * 1. User clicks "Login with Discord" → Redirected to Discord OAuth
  * 2. Discord redirects back with authorization code
@@ -16,7 +16,7 @@
  * 7. Frontend stores JWT and uses it for all Supabase requests
  * 8. Supabase validates JWT signature on every request
  * 9. RLS policies use the discord_id claim to filter data
- * 
+ *
  * WHY THIS IS SECURE:
  * - Users can see the JWT in their browser (it's not a secret)
  * - Users CANNOT modify the JWT because they don't have the signing key
@@ -36,7 +36,7 @@ const corsHeaders = {
 // Discord API endpoints
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/users/@me';
-const getGuildMemberURL = (guildId: string) => 
+const getGuildMemberURL = (guildId: string) =>
   `https://discord.com/api/v10/users/@me/guilds/${guildId}/member`;
 
 // JWT expiration (7 days in seconds)
@@ -185,7 +185,7 @@ function determineAccessLevel(
   majRoleId: string,
   ycRoleId: string,
   adminRoleId: string,
-  ownerDiscordId: string | null,
+  ownerDiscordId: string | null
 ): AccessLevel | null {
   if (!member || !member.roles) {
     return null;
@@ -206,12 +206,12 @@ function determineAccessLevel(
 
   // YC role grants admin access automatically, or check for admin role (Wonky Leader)
   const hasAdminRole = member.roles.includes(adminRoleId);
-  return (hasYcRole || hasAdminRole) ? 'admin' : 'user';
+  return hasYcRole || hasAdminRole ? 'admin' : 'user';
 }
 
 /**
  * Create a JWT signed with Supabase's JWT secret
- * 
+ *
  * IMPORTANT: This JWT must match Supabase's expected format for custom JWTs.
  * Required claims:
  * - iss: Issuer URL (your Supabase project URL)
@@ -246,27 +246,27 @@ async function createSupabaseJWT(
   // See: https://supabase.com/docs/guides/auth/jwts
   const payload = {
     // Required standard claims for Supabase
-    iss: `${supabaseUrl}/auth/v1`,           // Issuer - your Supabase Auth URL
-    sub: discordUser.id,                      // Subject - user ID (Discord ID as string is OK)
-    aud: 'authenticated',                     // Audience - must be 'authenticated'
-    role: 'authenticated',                    // Postgres role
-    iat: getNumericDate(0),                   // Issued at - now
+    iss: `${supabaseUrl}/auth/v1`, // Issuer - your Supabase Auth URL
+    sub: discordUser.id, // Subject - user ID (Discord ID as string is OK)
+    aud: 'authenticated', // Audience - must be 'authenticated'
+    role: 'authenticated', // Postgres role
+    iat: getNumericDate(0), // Issued at - now
     exp: getNumericDate(JWT_EXPIRATION_DAYS * 24 * 60 * 60), // Expiration
-    
+
     // Required user identity claims
-    email: '',                                // Empty if no email (Discord 'identify' scope doesn't provide email)
-    phone: '',                                // Empty if no phone
-    
+    email: '', // Empty if no email (Discord 'identify' scope doesn't provide email)
+    phone: '', // Empty if no phone
+
     // Custom claims for RLS policies
-    discord_id: discordUser.id,               // This is what our RLS policies check
-    access_level: accessLevel,                // 'user' or 'admin' - used for data filtering
-    
+    discord_id: discordUser.id, // This is what our RLS policies check
+    access_level: accessLevel, // 'user' or 'admin' - used for data filtering
+
     // Optional app metadata
     app_metadata: {
       provider: 'discord',
       providers: ['discord'],
     },
-    
+
     // Optional user metadata
     user_metadata: {
       discord_username: discordUser.username,
@@ -292,14 +292,14 @@ function validateEnvironment(): {
   ownerDiscordId: string | null;
 } {
   const vars = {
-    clientId:     'DISCORD_CLIENT_ID',
+    clientId: 'DISCORD_CLIENT_ID',
     clientSecret: 'DISCORD_CLIENT_SECRET',
-    jwtSecret:    'JWT_SECRET',
-    supabaseUrl:  'SUPABASE_URL',
-    guildId:      'EGGINC_GUILD',
-    majRoleId:    'EGGINC_MAJ_ROLE',
-    ycRoleId:     'EGGINC_YC_ROLE',
-    adminRoleId:  'EGGINC_WONKY_LEADER_ROLE',
+    jwtSecret: 'JWT_SECRET',
+    supabaseUrl: 'SUPABASE_URL',
+    guildId: 'EGGINC_GUILD',
+    majRoleId: 'EGGINC_MAJ_ROLE',
+    ycRoleId: 'EGGINC_YC_ROLE',
+    adminRoleId: 'EGGINC_WONKY_LEADER_ROLE',
   } as const;
 
   const required = Object.fromEntries(
@@ -324,18 +324,25 @@ Deno.serve(async (req: Request) => {
 
   // Only accept POST requests
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' } as ErrorResponse),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Method not allowed' } as ErrorResponse), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
     // Validate environment variables
-    const { clientId, clientSecret, jwtSecret, supabaseUrl, guildId, majRoleId, ycRoleId, adminRoleId, ownerDiscordId } = validateEnvironment();
+    const {
+      clientId,
+      clientSecret,
+      jwtSecret,
+      supabaseUrl,
+      guildId,
+      majRoleId,
+      ycRoleId,
+      adminRoleId,
+      ownerDiscordId,
+    } = validateEnvironment();
 
     // Parse request body
     const body: AuthRequest = await req.json();
@@ -351,13 +358,10 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!body.redirect_uri) {
-      return new Response(
-        JSON.stringify({ error: 'Missing redirect_uri' } as ErrorResponse),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Missing redirect_uri' } as ErrorResponse), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Processing Discord OAuth for code:', body.code.substring(0, 10) + '...');
@@ -380,14 +384,22 @@ Deno.serve(async (req: Request) => {
 
     // Step 3: Check guild membership and roles
     const guildMember = await fetchGuildMember(tokenResponse.access_token, guildId);
-    const accessLevel = determineAccessLevel(guildMember, discordUser.id, majRoleId, ycRoleId, adminRoleId, ownerDiscordId);
+    const accessLevel = determineAccessLevel(
+      guildMember,
+      discordUser.id,
+      majRoleId,
+      ycRoleId,
+      adminRoleId,
+      ownerDiscordId
+    );
 
     if (!accessLevel) {
       console.log('User does not have required access:', discordUser.id);
       return new Response(
         JSON.stringify({
           error: 'access_denied',
-          message: 'You must be a member of the Majeggstics Discord server with the Majeggstics role to access this dashboard.',
+          message:
+            'You must be a member of the Majeggstics Discord server with the Majeggstics role to access this dashboard.',
         } as ErrorResponse),
         {
           status: 403,
@@ -400,7 +412,12 @@ Deno.serve(async (req: Request) => {
 
     // Step 4: Create a signed JWT for Supabase
     // This JWT is signed with JWT_SECRET and includes the proper iss claim
-    const { token, expiresAt } = await createSupabaseJWT(discordUser, accessLevel, jwtSecret, supabaseUrl);
+    const { token, expiresAt } = await createSupabaseJWT(
+      discordUser,
+      accessLevel,
+      jwtSecret,
+      supabaseUrl
+    );
 
     console.log('Successfully created JWT for user:', discordUser.id);
 
@@ -425,11 +442,11 @@ Deno.serve(async (req: Request) => {
     console.error('Discord auth error:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Check if this is an authorization error (not authentication)
     const isAuthorizationError = errorMessage.includes('UNAUTHORIZED:');
     const status = isAuthorizationError ? 403 : 500;
-    
+
     const response: ErrorResponse = {
       error: isAuthorizationError ? 'Access Denied' : 'Authentication failed',
       details: errorMessage.replace('UNAUTHORIZED: ', ''),

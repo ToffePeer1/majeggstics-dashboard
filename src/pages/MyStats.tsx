@@ -10,23 +10,27 @@ import { CSV_EXPORT_HEADERS, METRIC_OPTIONS, type MetricKey } from '@/config/con
 
 /**
  * My Stats Page
- * 
+ *
  * Displays the authenticated user's own statistics.
- * 
+ *
  * SECURITY MODEL:
  * This page queries player_snapshots using the user's discord_id.
  * Even if a user tried to modify the query, RLS policies ensure
  * they can only see their own data:
- * 
+ *
  * USING (discord_id = (auth.jwt() ->> 'discord_id'))
- * 
+ *
  * The discord_id in the JWT was set by our Edge Function and signed
  * with the JWT_SECRET. Users cannot forge this value.
  */
 export default function MyStats() {
   const { user, discordId } = useAuth();
   const { data: snapshots, isLoading, error, refetch } = usePlayerSnapshots(discordId);
-  const { data: currentStatsData, isLoading: isLoadingCurrent, error: errorCurrent } = usePlayerCurrentStats();
+  const {
+    data: currentStatsData,
+    isLoading: isLoadingCurrent,
+    error: errorCurrent,
+  } = usePlayerCurrentStats();
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
 
   if (isLoading) {
@@ -68,24 +72,22 @@ export default function MyStats() {
     );
   }
 
-
   // Prepare chart data for selected metric
   // Filter out null/undefined values instead of filling with 0
   const chartData = snapshots
-    .map(s => ({ 
-      snapshot_date: s.snapshot_date, 
-      value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric]
+    .map((s) => ({
+      snapshot_date: s.snapshot_date,
+      value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric],
     }))
-    .filter(d => d.value != null)
-    .map(d => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
+    .filter((d) => d.value != null)
+    .map((d) => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
     .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
 
   // Determine if log scale should be used
   const useLogScale = selectedMetric === 'eb' || selectedMetric === 'se';
 
-
   const currentPlayer = currentStatsData?.player;
-  const lastUpdated = currentStatsData?.lastUpdated 
+  const lastUpdated = currentStatsData?.lastUpdated
     ? formatLastUpdated(currentStatsData.lastUpdated)
     : 'Unknown';
 
@@ -94,29 +96,39 @@ export default function MyStats() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>My Statistics</h1>
 
       <div className="info-message" style={{ marginBottom: '2rem' }}>
-        <p><strong>Welcome, {user?.global_name || user?.username}!</strong></p>
-        <p>Total snapshots tracked: <strong>{snapshots.length}</strong></p>
+        <p>
+          <strong>Welcome, {user?.global_name || user?.username}!</strong>
+        </p>
+        <p>
+          Total snapshots tracked: <strong>{snapshots.length}</strong>
+        </p>
       </div>
 
       {/* Current Stats */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
-        Current Stats
-      </h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Current Stats</h2>
       {isLoadingCurrent ? (
-        <div className="card" style={{ marginBottom: '2rem', padding: '2rem', textAlign: 'center' }}>
+        <div
+          className="card"
+          style={{ marginBottom: '2rem', padding: '2rem', textAlign: 'center' }}
+        >
           <LoadingSpinner text="Loading current stats..." />
         </div>
       ) : errorCurrent ? (
         <div className="card" style={{ marginBottom: '2rem' }}>
           <ErrorMessage
             title="Failed to Load Current Stats"
-            message={errorCurrent instanceof Error ? errorCurrent.message : 'An unknown error occurred'}
+            message={
+              errorCurrent instanceof Error ? errorCurrent.message : 'An unknown error occurred'
+            }
           />
         </div>
       ) : !currentPlayer ? (
         <div className="warning-message" style={{ marginBottom: '2rem' }}>
           <h3>📊 Current stats not available yet</h3>
-          <p>Your live stats will appear here after your first update in Egg Inc (usually within 24 hours).</p>
+          <p>
+            Your live stats will appear here after your first update in Egg Inc (usually within 24
+            hours).
+          </p>
           <p>Historical snapshots are still available below.</p>
         </div>
       ) : (
@@ -162,15 +174,27 @@ export default function MyStats() {
               </tr>
               <tr>
                 <td style={{ fontWeight: '500' }}>Mystical Egg Ratio (MER)</td>
-                <td>{currentPlayer.mer != null && !isNaN(currentPlayer.mer) ? currentPlayer.mer.toFixed(2) : 'N/A'}</td>
+                <td>
+                  {currentPlayer.mer != null && !isNaN(currentPlayer.mer)
+                    ? currentPlayer.mer.toFixed(2)
+                    : 'N/A'}
+                </td>
               </tr>
               <tr>
                 <td style={{ fontWeight: '500' }}>Jer's Egg Ratio (JER)</td>
-                <td>{currentPlayer.jer != null && !isNaN(currentPlayer.jer) ? currentPlayer.jer.toFixed(2) : 'N/A'}</td>
+                <td>
+                  {currentPlayer.jer != null && !isNaN(currentPlayer.jer)
+                    ? currentPlayer.jer.toFixed(2)
+                    : 'N/A'}
+                </td>
               </tr>
               <tr>
                 <td style={{ fontWeight: '500' }}>Prestiges</td>
-                <td>{currentPlayer.num_prestiges != null ? formatInteger(currentPlayer.num_prestiges) : 'N/A'}</td>
+                <td>
+                  {currentPlayer.num_prestiges != null
+                    ? formatInteger(currentPlayer.num_prestiges)
+                    : 'N/A'}
+                </td>
               </tr>
               <tr>
                 <td style={{ fontWeight: '500' }}>Role</td>
@@ -189,7 +213,9 @@ export default function MyStats() {
         </div>
       )}
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
 
       {/* Progression Chart with Metric Selector */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Progression Analysis</h2>
@@ -198,14 +224,16 @@ export default function MyStats() {
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
             Select a metric to visualize:
           </label>
-          <select 
-            value={selectedMetric} 
-            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)} 
+          <select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)}
             className="select"
             style={{ maxWidth: '300px' }}
           >
             {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
@@ -218,49 +246,51 @@ export default function MyStats() {
         />
       </div>
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
 
       {/* Historical Snapshots */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Historical Snapshots</h2>
-        <div className="card" style={{ overflowX: 'auto' }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>EB</th>
-                <th>SE</th>
-                <th>PE</th>
-                <th>TE</th>
-                <th>Prestiges</th>
-                <th>Role</th>
-                <th>Grade</th>
-                <th>Active</th>
+      <div className="card" style={{ overflowX: 'auto' }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>EB</th>
+              <th>SE</th>
+              <th>PE</th>
+              <th>TE</th>
+              <th>Prestiges</th>
+              <th>Role</th>
+              <th>Grade</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {snapshots.slice(0, 50).map((snapshot, idx) => (
+              <tr key={idx}>
+                <td>{snapshot.snapshot_date}</td>
+                <td>{bigNumberToString(snapshot.eb)}%</td>
+                <td>{bigNumberToString(snapshot.se)}</td>
+                <td>{formatInteger(snapshot.pe)}</td>
+                <td>{snapshot.te != null ? formatInteger(snapshot.te) : 'N/A'}</td>
+                <td>{formatInteger(snapshot.num_prestiges)}</td>
+                <td>{snapshot.farmer_role || 'N/A'}</td>
+                <td>{snapshot.grade || 'N/A'}</td>
+                <td>{snapshot.active ? '✅' : '❌'}</td>
               </tr>
-            </thead>
-            <tbody>
-              {snapshots.slice(0, 50).map((snapshot, idx) => (
-                <tr key={idx}>
-                  <td>{snapshot.snapshot_date}</td>
-                  <td>{bigNumberToString(snapshot.eb)}%</td>
-                  <td>{bigNumberToString(snapshot.se)}</td>
-                  <td>{formatInteger(snapshot.pe)}</td>
-                  <td>{snapshot.te != null ? formatInteger(snapshot.te) : 'N/A'}</td>
-                  <td>{formatInteger(snapshot.num_prestiges)}</td>
-                  <td>{snapshot.farmer_role || 'N/A'}</td>
-                  <td>{snapshot.grade || 'N/A'}</td>
-                  <td>{snapshot.active ? '✅' : '❌'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div style={{ marginTop: '2rem' }}>
         <button
           onClick={() => {
             const csv = [[...CSV_EXPORT_HEADERS].join(',')];
-            snapshots.forEach(snapshot => {
-              const row = CSV_EXPORT_HEADERS.map(header => {
+            snapshots.forEach((snapshot) => {
+              const row = CSV_EXPORT_HEADERS.map((header) => {
                 const value = snapshot[header];
                 return value != null ? `"${value}"` : '""';
               });

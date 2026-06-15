@@ -34,17 +34,12 @@ export default function Leaderboards() {
   const players = leaderboardData?.players || [];
 
   if (players.length === 0) {
-    return (
-      <ErrorMessage
-        title="No Data Available"
-        message="No leaderboard data available."
-      />
-    );
+    return <ErrorMessage title="No Data Available" message="No leaderboard data available." />;
   }
 
   // Format last updated time for display
   console.log('Leaderboard last updated:', leaderboardData?.lastUpdated);
-  const lastUpdated = leaderboardData?.lastUpdated 
+  const lastUpdated = leaderboardData?.lastUpdated
     ? formatLastUpdated(leaderboardData.lastUpdated)
     : 'Unknown';
 
@@ -54,13 +49,13 @@ export default function Leaderboards() {
   // Apply filters (guests are always included)
   let filteredPlayers = [...players];
   if (!showInactive) {
-    filteredPlayers = filteredPlayers.filter(p => p.active);
+    filteredPlayers = filteredPlayers.filter((p) => p.active);
   }
-  
+
   // Filter out players with null/undefined values for the sort column
   // and re-sort client-side to ensure proper ordering (database puts NULLs first in descending order)
   filteredPlayers = filteredPlayers
-    .filter(p => {
+    .filter((p) => {
       const value = (p as unknown as Record<string, number | null | undefined>)[sortBy];
       return value != null;
     })
@@ -69,50 +64,54 @@ export default function Leaderboards() {
       const bVal = (b as unknown as Record<string, number>)[sortBy] || 0;
       return bVal - aVal; // Descending order
     });
-  
+
   // Calculate proper ranking with ties (dense ranking)
   const playerRanks: Record<string, number> = {};
   let currentRank = 1;
   let previousValue: number | null = null;
-  
+
   filteredPlayers.forEach((player, idx) => {
     const currentValue = (player as unknown as Record<string, number>)[sortBy] || 0;
-    
+
     if (previousValue !== null && currentValue !== previousValue) {
       currentRank = idx + 1;
     }
-    
+
     playerRanks[player.discord_id] = currentRank;
     previousValue = currentValue;
   });
-  
+
   // Find current user's rank
   const currentUserRank = discordId && playerRanks[discordId] ? playerRanks[discordId] : null;
 
   // Build sort options based on access level
   // Non-admins don't see num_prestiges option since that data isn't fetched for them
   const sortOptions = Object.fromEntries(
-    Object.entries(METRIC_OPTIONS).filter(([key]) => 
-      isAdmin || key !== 'num_prestiges'
-    )
+    Object.entries(METRIC_OPTIONS).filter(([key]) => isAdmin || key !== 'num_prestiges')
   );
 
   // Calculate statistics
-  const ebValues = filteredPlayers.map(p => p.eb).filter(v => v != null);
-  const peValues = filteredPlayers.map(p => p.pe).filter(v => v != null);
-  const seValues = filteredPlayers.map(p => p.se).filter(v => v != null);
-  const merValues = filteredPlayers.map(p => p.mer).filter(v => v != null && !isNaN(v) && isFinite(v));
-  const jerValues = filteredPlayers.map(p => p.jer).filter(v => v != null && !isNaN(v) && isFinite(v));
-  
+  const ebValues = filteredPlayers.map((p) => p.eb).filter((v) => v != null);
+  const peValues = filteredPlayers.map((p) => p.pe).filter((v) => v != null);
+  const seValues = filteredPlayers.map((p) => p.se).filter((v) => v != null);
+  const merValues = filteredPlayers
+    .map((p) => p.mer)
+    .filter((v) => v != null && !isNaN(v) && isFinite(v));
+  const jerValues = filteredPlayers
+    .map((p) => p.jer)
+    .filter((v) => v != null && !isNaN(v) && isFinite(v));
+
   const totalSe = seValues.reduce((sum, v) => sum + v, 0);
   const totalEb = ebValues.reduce((sum, v) => sum + v, 0);
   const totalPe = peValues.reduce((sum, v) => sum + v, 0);
-  const avgMer = merValues.length > 0 ? merValues.reduce((sum, v) => sum + v, 0) / merValues.length : 0;
-  const avgJer = jerValues.length > 0 ? jerValues.reduce((sum, v) => sum + v, 0) / jerValues.length : 0;
+  const avgMer =
+    merValues.length > 0 ? merValues.reduce((sum, v) => sum + v, 0) / merValues.length : 0;
+  const avgJer =
+    jerValues.length > 0 ? jerValues.reduce((sum, v) => sum + v, 0) / jerValues.length : 0;
 
   // Role distribution
   const roleDistribution: Record<string, number> = {};
-  filteredPlayers.forEach(p => {
+  filteredPlayers.forEach((p) => {
     const role = p.farmer_role || 'Unknown';
     roleDistribution[role] = (roleDistribution[role] || 0) + 1;
   });
@@ -122,11 +121,17 @@ export default function Leaderboards() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Current Leaderboards</h1>
 
       <div className="info-message" style={{ marginBottom: '1.5rem' }}>
-        Last updated: <strong>{lastUpdated}</strong>
-        {' '}(updates every 15 minutes from Wonky)
+        Last updated: <strong>{lastUpdated}</strong> (updates every 15 minutes from Wonky)
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          marginBottom: '2rem',
+        }}
+      >
         <div className="metric-card">
           <div className="metric-label">Total Players</div>
           <div className="metric-value">{totalPlayerCount}</div>
@@ -137,45 +142,57 @@ export default function Leaderboards() {
           )}
         </div>
         {currentUserRank && currentUserRank > 0 ? (
-          <div className="metric-card" style={{ borderColor: 'var(--color-primary)', borderWidth: '2px' }}>
+          <div
+            className="metric-card"
+            style={{ borderColor: 'var(--color-primary)', borderWidth: '2px' }}
+          >
             <div className="metric-label">Your Rank ({sortOptions[sortBy]})</div>
             <div className="metric-value">#{currentUserRank}</div>
           </div>
         ) : discordId ? (
           <div className="metric-card">
             <div className="metric-label">Your Rank</div>
-            <div className="metric-value" style={{ fontSize: '1rem' }}>Not ranked</div>
+            <div className="metric-value" style={{ fontSize: '1rem' }}>
+              Not ranked
+            </div>
           </div>
         ) : null}
         <div className="metric-card">
           <div className="metric-label">Total SE</div>
-          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{bigNumberToString(totalSe)}</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+            {bigNumberToString(totalSe)}
+          </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Total EB</div>
-          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{bigNumberToString(totalEb)}</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+            {bigNumberToString(totalEb)}
+          </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Total PE</div>
-          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{formatInteger(totalPe)}</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+            {formatInteger(totalPe)}
+          </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Avg MER</div>
-          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{avgMer.toFixed(2)}</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+            {avgMer.toFixed(2)}
+          </div>
         </div>
         <div className="metric-card">
           <div className="metric-label">Avg JER</div>
-          <div className="metric-value" style={{ fontSize: '1.25rem' }}>{avgJer.toFixed(2)}</div>
+          <div className="metric-value" style={{ fontSize: '1.25rem' }}>
+            {avgJer.toFixed(2)}
+          </div>
         </div>
       </div>
 
       {/* Role Distribution Chart */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <h2 style={{ marginBottom: '1rem' }}>Role Distribution</h2>
-        <RoleDistributionChart 
-          data={roleDistribution} 
-          title="Current Role Distribution"
-        />
+        <RoleDistributionChart data={roleDistribution} title="Current Role Distribution" />
       </div>
 
       {/* Options */}
@@ -183,16 +200,27 @@ export default function Leaderboards() {
         <h3 style={{ marginBottom: '1rem' }}>Options</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as MetricKey)} className="select" style={{ maxWidth: '300px' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+              Sort by:
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as MetricKey)}
+              className="select"
+              style={{ maxWidth: '300px' }}
+            >
               {Object.entries(sortOptions).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+                <option key={key} value={key}>
+                  {label}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <label
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+            >
               <input
                 type="checkbox"
                 checked={showInactive}
@@ -227,7 +255,9 @@ export default function Leaderboards() {
           <tbody>
             {filteredPlayers.map((player) => (
               <tr key={player.discord_id}>
-                <td><strong>{playerRanks[player.discord_id]}</strong></td>
+                <td>
+                  <strong>{playerRanks[player.discord_id]}</strong>
+                </td>
                 <td>{player.ign}</td>
                 <td>{player.display_name}</td>
                 <td>{bigNumberToString(player.eb)}%</td>
@@ -245,8 +275,9 @@ export default function Leaderboards() {
         </table>
       </div>
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
-
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
     </div>
   );
 }

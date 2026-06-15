@@ -28,51 +28,53 @@ export default function GradeDistributionChart({
     );
   }
 
-// Calculate normalized data if needed
-const processedData = isNormalized
-  ? data.map(row => {
-      const total = GRADES.reduce((sum, grade) => sum + row[grade], 0);
-      return {
-        snapshot_date: row.snapshot_date,
-        // A bit hacky but TS needs the explicit type here
-        AAA: total > 0 ? (row.AAA / total) * 100 : 0,
-        AA: total > 0 ? (row.AA / total) * 100 : 0,
-        A: total > 0 ? (row.A / total) * 100 : 0,
-        B: total > 0 ? (row.B / total) * 100 : 0,
-        C: total > 0 ? (row.C / total) * 100 : 0,
-      };
-    })
-  : data;
+  // Calculate normalized data if needed
+  const processedData = isNormalized
+    ? data.map((row) => {
+        const total = GRADES.reduce((sum, grade) => sum + row[grade], 0);
+        return {
+          snapshot_date: row.snapshot_date,
+          // A bit hacky but TS needs the explicit type here
+          AAA: total > 0 ? (row.AAA / total) * 100 : 0,
+          AA: total > 0 ? (row.AA / total) * 100 : 0,
+          A: total > 0 ? (row.A / total) * 100 : 0,
+          B: total > 0 ? (row.B / total) * 100 : 0,
+          C: total > 0 ? (row.C / total) * 100 : 0,
+        };
+      })
+    : data;
 
-  const traces = GRADES.map(grade => ({
-    x: processedData.map(d => d.snapshot_date),
-    y: processedData.map(d => d[grade]),
+  const traces = GRADES.map((grade) => ({
+    x: processedData.map((d) => d.snapshot_date),
+    y: processedData.map((d) => d[grade]),
     type: 'scatter' as const,
     mode: 'lines' as const,
     name: grade.toUpperCase(),
     line: { width: 0.5, color: GRADE_COLORS[grade] },
     stackgroup: 'one',
     fillcolor: GRADE_COLORS[grade],
-    hovertemplate: isNormalized
-      ? `%{y:.1f}%<extra></extra>`
-      : `%{y}<extra></extra>`,
+    hovertemplate: isNormalized ? `%{y:.1f}%<extra></extra>` : `%{y}<extra></extra>`,
   }));
 
   return (
     <div>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        marginBottom: '0.5rem',
-        paddingRight: '1rem'
-      }}>
-        <label style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.5rem',
-          cursor: 'pointer',
-          fontSize: '0.9rem'
-        }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginBottom: '0.5rem',
+          paddingRight: '1rem',
+        }}
+      >
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+          }}
+        >
           <input
             type="checkbox"
             checked={isNormalized}
@@ -82,7 +84,7 @@ const processedData = isNormalized
           Show as percentage
         </label>
       </div>
-      
+
       <Plot
         data={traces}
         layout={{

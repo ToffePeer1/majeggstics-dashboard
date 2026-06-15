@@ -20,7 +20,7 @@ export type { AuthContextType } from '@/contexts/AuthContextDef';
 
 /**
  * Auth Context for Discord OAuth with custom JWT
- * 
+ *
  * SECURITY MODEL:
  * ================
  * 1. User clicks login → Redirected to Discord OAuth (only 'identify' scope)
@@ -35,7 +35,7 @@ export type { AuthContextType } from '@/contexts/AuthContextDef';
  * 6. All Supabase requests include JWT in Authorization header
  * 7. Supabase validates JWT signature on every request
  * 8. RLS policies use discord_id claim to filter data
- * 
+ *
  * WHY THIS IS SECURE:
  * - JWT signing key is never exposed to client
  * - Users can see JWT but cannot forge valid signatures
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           expiresAt: payload?.exp ? payload.exp * 1000 : null,
         });
       } else {
-        setAuthState(prev => ({
+        setAuthState((prev) => ({
           ...prev,
           isLoading: false,
         }));
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
           // Required for Supabase Edge Functions - identifies the project
-          'apikey': ENV.SUPABASE_ANON_KEY,
+          apikey: ENV.SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           code,
@@ -159,7 +159,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!response.ok) {
         const errorData: AuthErrorResponse = await response.json();
         // Check for message field first (used for access denied errors), then details, then error code
-        throw new Error(errorData.message || errorData.details || errorData.error || 'Authentication failed');
+        throw new Error(
+          errorData.message || errorData.details || errorData.error || 'Authentication failed'
+        );
       }
 
       const data: DiscordAuthResponse = await response.json();
@@ -200,7 +202,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Get a Supabase client configured with the user's JWT
    * Use this for all authenticated database requests
-   * 
+   *
    * The JWT is included in the Authorization header, and Supabase
    * validates the signature and extracts claims for RLS policies
    */
@@ -212,7 +214,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Show loading state while checking stored auth
   if (authState.isLoading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <div className="loading-container">
           <div className="spinner"></div>
           <p>Loading...</p>

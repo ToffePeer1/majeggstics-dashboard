@@ -56,7 +56,7 @@ export const FARMER_ROLES = [
   { oom: 51, name: 'Infinifarmer I', color: '#546e7a' },
 ] as const;
 
-export type FarmerRoleName = typeof FARMER_ROLES[number]['name'];
+export type FarmerRoleName = (typeof FARMER_ROLES)[number]['name'];
 /**
  * Calculate farmer role from EB value
  */
@@ -88,23 +88,22 @@ export function getColorForEB(eb: number): string {
   return FARMER_ROLES[oom].color;
 }
 
-export function calculatePlayerMER(
-  pe: number,
-  se: number
-) {
-    if (se <= 0)
-        return 0;
+export function calculatePlayerMER(pe: number, se: number) {
+  if (se <= 0) return 0;
 
-    const seQ = se / 1e18;
-    return (91 * Math.log10(seQ) + 200 - pe) / 10;
+  const seQ = se / 1e18;
+  return (91 * Math.log10(seQ) + 200 - pe) / 10;
 }
 
-export function calculatePlayerJER(
-  pe: number,
-  se: number,
-  te: number | null
-) {
-  const effectivePE = pe + ( te || 0) * Math.log(1.01) / Math.log(1.10);
+export function calculatePlayerJER(pe: number, se: number, te: number | null) {
+  const effectivePE = pe + ((te || 0) * Math.log(1.01)) / Math.log(1.1);
   const logSE = Math.log10(se);
-  return (((0.1519 * Math.pow(logSE, 3) - 4.8517 * Math.pow(logSE, 2) + 48.248 * logSE - 143.46) / effectivePE)*100*effectivePE+100*49) / (effectivePE + 100);
+  return (
+    (((0.1519 * Math.pow(logSE, 3) - 4.8517 * Math.pow(logSE, 2) + 48.248 * logSE - 143.46) /
+      effectivePE) *
+      100 *
+      effectivePE +
+      100 * 49) /
+    (effectivePE + 100)
+  );
 }

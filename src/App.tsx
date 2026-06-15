@@ -56,7 +56,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      
+
       <Route element={<Layout />}>
         <Route
           path="/"
@@ -115,7 +115,7 @@ function AppRoutes() {
           }
         />
       </Route>
-      
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

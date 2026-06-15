@@ -1,65 +1,65 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface LastDecisionResult {
-  shouldSave: boolean
-  reason: string
-  syncPercentage: number
-  isPendingSync?: boolean
+  shouldSave: boolean;
+  reason: string;
+  syncPercentage: number;
+  isPendingSync?: boolean;
 }
 
 interface PendingMissingPlayer {
-  discord_id: string
-  ign: string
-  updatedAt: string
+  discord_id: string;
+  ign: string;
+  updatedAt: string;
 }
 
 interface PendingSyncData {
-  players: unknown[]
-  timestamp: string
-  syncPercentage: number
-  attemptCount: number
-  missingPlayers: PendingMissingPlayer[]
+  players: unknown[];
+  timestamp: string;
+  syncPercentage: number;
+  attemptCount: number;
+  missingPlayers: PendingMissingPlayer[];
 }
 
 interface SnapshotStatus {
-  last_saved_at: string | null
-  last_decision_at: string | null
-  last_decision_result: LastDecisionResult | null
-  pending_sync_data: PendingSyncData | null
-  pending_sync_first_attempt: string | null
-  pending_sync_attempt_count: number | null
-  last_email_sent_at: string | null
-  last_email_type: string | null
+  last_saved_at: string | null;
+  last_decision_at: string | null;
+  last_decision_result: LastDecisionResult | null;
+  pending_sync_data: PendingSyncData | null;
+  pending_sync_first_attempt: string | null;
+  pending_sync_attempt_count: number | null;
+  last_email_sent_at: string | null;
+  last_email_type: string | null;
 }
 
 interface SnapshotResult {
-  inserted: number
-  errors: number
+  inserted: number;
+  errors: number;
 }
 
 interface ActionResult {
-  success: boolean
-  dryRun?: boolean
-  playerCount?: number
-  snapshotDate?: string
-  snapshots?: SnapshotResult
-  eggdayGains?: SnapshotResult
-  emailSent?: boolean
-  message?: string
-  error?: string
+  success: boolean;
+  dryRun?: boolean;
+  playerCount?: number;
+  snapshotDate?: string;
+  snapshots?: SnapshotResult;
+  eggdayGains?: SnapshotResult;
+  emailSent?: boolean;
+  message?: string;
+  error?: string;
 }
 
 interface SnapshotListItem {
-  snapshot_date: string
-  record_count: number
-  imported_at: string
+  snapshot_date: string;
+  record_count: number;
+  imported_at: string;
 }
 
-type OwnerAction = 'force-update' | 'dry-run' | 'get-status' | 'mark-saved'
+type OwnerAction = 'force-update' | 'dry-run' | 'get-status' | 'mark-saved';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ function formatDate(isoString: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })
+  });
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ function StatusRow({ label, value }: { label: string; value: string }) {
       </span>
       <span style={{ fontSize: '0.875rem', color: 'var(--color-text)' }}>{value}</span>
     </div>
-  )
+  );
 }
 
 function StatusRows({ children }: { children: React.ReactNode }) {
@@ -116,11 +116,11 @@ function StatusRows({ children }: { children: React.ReactNode }) {
     >
       {children}
     </div>
-  )
+  );
 }
 
 function ActionResultCard({ result }: { result: ActionResult }) {
-  const isSuccess = result.success && !result.error
+  const isSuccess = result.success && !result.error;
   return (
     <div
       className="card"
@@ -157,128 +157,128 @@ function ActionResultCard({ result }: { result: ActionResult }) {
         {result.error && <StatusRow label="Error" value={result.error} />}
       </StatusRows>
     </div>
-  )
+  );
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function OwnerPanel() {
-  const { getAuthenticatedClient } = useAuth()
+  const { getAuthenticatedClient } = useAuth();
 
-  const [status, setStatus] = useState<SnapshotStatus | null>(null)
-  const [statusLoading, setStatusLoading] = useState(true)
-  const [statusError, setStatusError] = useState<string | null>(null)
+  const [status, setStatus] = useState<SnapshotStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
-  const [actionLoading, setActionLoading] = useState<OwnerAction | null>(null)
-  const [actionResult, setActionResult] = useState<ActionResult | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<OwnerAction | null>(null);
+  const [actionResult, setActionResult] = useState<ActionResult | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const [snapshots, setSnapshots] = useState<SnapshotListItem[]>([])
-  const [snapshotsLoading, setSnapshotsLoading] = useState(true)
-  const [selectedSnapshot, setSelectedSnapshot] = useState<string>('')
-  const [deleteConfirm, setDeleteConfirm] = useState(false)
-  const [deleteLoading, setDeleteLoading] = useState(false)
-  const [deleteResult, setDeleteResult] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [snapshots, setSnapshots] = useState<SnapshotListItem[]>([]);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(true);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<string>('');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // ── Owner actions ─────────────────────────────────────────────────────────
 
   const callAction = useCallback(
     async (action: OwnerAction) => {
-      const supabase = getAuthenticatedClient()
-      if (!supabase) return
+      const supabase = getAuthenticatedClient();
+      if (!supabase) return;
 
       if (action === 'get-status') {
-        setStatusLoading(true)
-        setStatusError(null)
+        setStatusLoading(true);
+        setStatusError(null);
       } else {
-        setActionLoading(action)
-        setActionError(null)
-        setActionResult(null)
+        setActionLoading(action);
+        setActionError(null);
+        setActionResult(null);
       }
 
       try {
         const { data, error } = await supabase.functions.invoke('owner-actions', {
           body: { action },
-        })
+        });
 
-        if (error) throw error
+        if (error) throw error;
 
         if (action === 'get-status') {
-          setStatus((data as { data: SnapshotStatus }).data)
+          setStatus((data as { data: SnapshotStatus }).data);
         } else {
-          setActionResult(data as ActionResult)
+          setActionResult(data as ActionResult);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        if (action === 'get-status') setStatusError(message)
-        else setActionError(message)
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        if (action === 'get-status') setStatusError(message);
+        else setActionError(message);
       } finally {
-        if (action === 'get-status') setStatusLoading(false)
-        else setActionLoading(null)
+        if (action === 'get-status') setStatusLoading(false);
+        else setActionLoading(null);
       }
     },
     [getAuthenticatedClient]
-  )
+  );
 
   // ── Snapshot list ─────────────────────────────────────────────────────────
 
   const loadSnapshots = useCallback(async () => {
-    const supabase = getAuthenticatedClient()
-    if (!supabase) return
+    const supabase = getAuthenticatedClient();
+    if (!supabase) return;
 
-    setSnapshotsLoading(true)
+    setSnapshotsLoading(true);
     try {
       const { data, error } = await supabase
         .from('snapshot_metadata')
         .select('snapshot_date, record_count, imported_at')
-        .order('snapshot_date', { ascending: false })
+        .order('snapshot_date', { ascending: false });
 
-      if (error) throw error
+      if (error) throw error;
 
-      const list = (data ?? []) as SnapshotListItem[]
-      setSnapshots(list)
-      if (list.length > 0) setSelectedSnapshot(list[0].snapshot_date)
+      const list = (data ?? []) as SnapshotListItem[];
+      setSnapshots(list);
+      if (list.length > 0) setSelectedSnapshot(list[0].snapshot_date);
     } catch {
-      setSnapshots([])
+      setSnapshots([]);
     } finally {
-      setSnapshotsLoading(false)
+      setSnapshotsLoading(false);
     }
-  }, [getAuthenticatedClient])
+  }, [getAuthenticatedClient]);
 
   // ── Delete snapshot ───────────────────────────────────────────────────────
 
   const deleteSnapshot = useCallback(async () => {
-    const supabase = getAuthenticatedClient()
-    if (!supabase || !selectedSnapshot) return
+    const supabase = getAuthenticatedClient();
+    if (!supabase || !selectedSnapshot) return;
 
-    setDeleteLoading(true)
-    setDeleteError(null)
-    setDeleteResult(null)
-    setDeleteConfirm(false)
+    setDeleteLoading(true);
+    setDeleteError(null);
+    setDeleteResult(null);
+    setDeleteConfirm(false);
 
     try {
       const { data, error } = await supabase.functions.invoke('delete-snapshot', {
         body: { snapshot_date: selectedSnapshot },
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setDeleteResult((data as { message: string }).message)
-      await loadSnapshots()
+      setDeleteResult((data as { message: string }).message);
+      await loadSnapshots();
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Unknown error')
+      setDeleteError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
-      setDeleteLoading(false)
+      setDeleteLoading(false);
     }
-  }, [getAuthenticatedClient, selectedSnapshot, loadSnapshots])
+  }, [getAuthenticatedClient, selectedSnapshot, loadSnapshots]);
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    callAction('get-status')
-    loadSnapshots()
-  }, [callAction, loadSnapshots])
+    callAction('get-status');
+    loadSnapshots();
+  }, [callAction, loadSnapshots]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -419,8 +419,8 @@ export default function OwnerPanel() {
               className="button button-secondary"
               style={{ border: '1px solid var(--color-border)' }}
               onClick={async () => {
-                await callAction('mark-saved')
-                await callAction('get-status')
+                await callAction('mark-saved');
+                await callAction('get-status');
               }}
               disabled={actionLoading !== null}
             >
@@ -479,10 +479,10 @@ export default function OwnerPanel() {
                   className="select"
                   value={selectedSnapshot}
                   onChange={(e) => {
-                    setSelectedSnapshot(e.target.value)
-                    setDeleteConfirm(false)
-                    setDeleteResult(null)
-                    setDeleteError(null)
+                    setSelectedSnapshot(e.target.value);
+                    setDeleteConfirm(false);
+                    setDeleteResult(null);
+                    setDeleteError(null);
                   }}
                 >
                   {snapshots.map((s) => (
@@ -534,5 +534,5 @@ export default function OwnerPanel() {
         )}
       </div>
     </div>
-  )
+  );
 }

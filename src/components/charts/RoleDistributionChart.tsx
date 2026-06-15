@@ -24,7 +24,7 @@ export default function RoleDistributionChart({
   }
 
   // Create a mapping from role name to role data
-  const roleMap = new Map(FARMER_ROLES.map(role => [role.name, role]));
+  const roleMap = new Map(FARMER_ROLES.map((role) => [role.name, role]));
 
   // Find the highest role with players
   let highestRoleIndex = 0;
@@ -38,16 +38,16 @@ export default function RoleDistributionChart({
   }
 
   // Create array of all roles from Farmer I (oom 0) to highest current role
-  const displayRoles = FARMER_ROLES.filter(role => role.oom <= highestRoleIndex);
+  const displayRoles = FARMER_ROLES.filter((role) => role.oom <= highestRoleIndex);
 
   // Prepare data for plotting
-  const roleNames = displayRoles.map(role => role.name);
-  const roleCounts = displayRoles.map(role => data[role.name] || 0);
-  const roleColors = displayRoles.map(role => role.color);
+  const roleNames = displayRoles.map((role) => role.name);
+  const roleCounts = displayRoles.map((role) => data[role.name] || 0);
+  const roleColors = displayRoles.map((role) => role.color);
 
   // Create hover text with count information
-  const hoverText = displayRoles.map((role, idx) => 
-    `${role.name}: ${roleCounts[idx]} player${roleCounts[idx] !== 1 ? 's' : ''}`
+  const hoverText = displayRoles.map(
+    (role, idx) => `${role.name}: ${roleCounts[idx]} player${roleCounts[idx] !== 1 ? 's' : ''}`
   );
 
   return (
@@ -64,9 +64,9 @@ export default function RoleDistributionChart({
               width: 1,
             },
           },
-          text: roleCounts.map(count => count.toString()), // Just the number
+          text: roleCounts.map((count) => count.toString()), // Just the number
           textposition: 'outside', // Position text above bars
-          hovertemplate: hoverText.map(text => `${text}<extra></extra>`), // Full text on hover
+          hovertemplate: hoverText.map((text) => `${text}<extra></extra>`), // Full text on hover
         },
       ]}
       layout={{
@@ -95,7 +95,15 @@ export default function RoleDistributionChart({
         responsive: true,
         displayModeBar: true,
         displaylogo: false,
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'zoom2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d'],
+        modeBarButtonsToRemove: [
+          'pan2d',
+          'lasso2d',
+          'select2d',
+          'zoom2d',
+          'zoomIn2d',
+          'zoomOut2d',
+          'autoScale2d',
+        ],
       }}
       style={{ width: '100%' }}
     />

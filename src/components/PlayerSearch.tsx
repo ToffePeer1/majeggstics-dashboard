@@ -7,10 +7,10 @@ interface PlayerSearchProps {
   placeholder?: string;
 }
 
-export default function PlayerSearch({ 
-  players, 
-  onSelect, 
-  placeholder = 'Type player name or paste Discord ID...'
+export default function PlayerSearch({
+  players,
+  onSelect,
+  placeholder = 'Type player name or paste Discord ID...',
 }: PlayerSearchProps) {
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -20,9 +20,10 @@ export default function PlayerSearch({
 
   // Filter players based on input
   const filteredPlayers = inputValue.trim()
-    ? players.filter(player => 
-        player.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-        player.discordId.includes(inputValue)
+    ? players.filter(
+        (player) =>
+          player.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+          player.discordId.includes(inputValue)
       )
     : players;
 
@@ -39,7 +40,7 @@ export default function PlayerSearch({
   };
 
   const handleSelect = (discordId: string) => {
-    const player = players.find(p => p.discordId === discordId);
+    const player = players.find((p) => p.discordId === discordId);
     setInputValue(player?.label || discordId);
     setIsOpen(false);
     onSelect(discordId);
@@ -53,7 +54,7 @@ export default function PlayerSearch({
 
     if (e.key === 'Enter') {
       e.preventDefault();
-      
+
       if (highlightedIndex >= 0 && highlightedIndex < filteredPlayers.length) {
         // Select highlighted option
         handleSelect(filteredPlayers[highlightedIndex].discordId);
@@ -66,12 +67,10 @@ export default function PlayerSearch({
       }
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedIndex(prev => 
-        prev < filteredPlayers.length - 1 ? prev + 1 : prev
-      );
+      setHighlightedIndex((prev) => (prev < filteredPlayers.length - 1 ? prev + 1 : prev));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === 'Escape') {
       setIsOpen(false);
       setHighlightedIndex(-1);
@@ -121,7 +120,7 @@ export default function PlayerSearch({
             style={{ width: '100%', padding: '0.75rem' }}
             autoComplete="off"
           />
-          
+
           {/* Dropdown list */}
           {isOpen && filteredPlayers.length > 0 && (
             <ul
@@ -150,12 +149,12 @@ export default function PlayerSearch({
                   style={{
                     padding: '0.75rem 1rem',
                     cursor: 'pointer',
-                    background: index === highlightedIndex 
-                      ? 'var(--color-bg-hover, #f0f0f0)' 
-                      : 'transparent',
-                    borderBottom: index < filteredPlayers.length - 1 
-                      ? '1px solid var(--color-border-light, #eee)' 
-                      : 'none',
+                    background:
+                      index === highlightedIndex ? 'var(--color-bg-hover, #f0f0f0)' : 'transparent',
+                    borderBottom:
+                      index < filteredPlayers.length - 1
+                        ? '1px solid var(--color-border-light, #eee)'
+                        : 'none',
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
@@ -163,12 +162,14 @@ export default function PlayerSearch({
                 </li>
               ))}
               {filteredPlayers.length > 50 && (
-                <li style={{ 
-                  padding: '0.5rem 1rem', 
-                  color: 'var(--color-text-muted, #888)',
-                  fontSize: '0.875rem',
-                  textAlign: 'center',
-                }}>
+                <li
+                  style={{
+                    padding: '0.5rem 1rem',
+                    color: 'var(--color-text-muted, #888)',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                  }}
+                >
                   ... and {filteredPlayers.length - 50} more (type to filter)
                 </li>
               )}

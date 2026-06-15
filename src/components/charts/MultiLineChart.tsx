@@ -13,19 +13,19 @@ interface MultiLineChartProps {
 }
 
 function generateTickValues(allValues: number[], useLogScale: boolean): number[] | null {
-  const values = allValues.filter(v => v != null && !isNaN(v));
+  const values = allValues.filter((v) => v != null && !isNaN(v));
   if (values.length === 0) return null;
-  
+
   const yMin = Math.min(...values);
   const yMax = Math.max(...values);
-  
+
   if (useLogScale) {
     if (yMin <= 0 || yMax <= 0) return null;
-    
+
     const logMin = Math.floor(Math.log10(Math.max(yMin, 1e-100)));
     const logMax = Math.ceil(Math.log10(yMax));
     const ticks: number[] = [];
-    
+
     for (let i = logMin; i <= logMax; i++) {
       ticks.push(Math.pow(10, i));
     }
@@ -34,7 +34,7 @@ function generateTickValues(allValues: number[], useLogScale: boolean): number[]
     const numTicks = 8;
     const step = (yMax - yMin) / (numTicks - 1);
     const ticks: number[] = [];
-    
+
     for (let i = 0; i < numTicks; i++) {
       ticks.push(yMin + step * i);
     }
@@ -61,25 +61,33 @@ export default function MultiLineChart({
   if (!data || Object.keys(data).length === 0) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-        No data available for this metric. The selected statistic may not have been tracked during this period.
+        No data available for this metric. The selected statistic may not have been tracked during
+        this period.
       </div>
     );
   }
 
   // Auto-detect if this is EB based on title
-  const detectIsEb = isEb || yAxisTitle.toLowerCase().includes('eb') || title.toLowerCase().includes('earnings bonus');
-  const detectIsInteger = isInteger || ['prestige', 'pe', 'te'].some(t => yAxisTitle.toLowerCase().includes(t));
-  const shouldShowNote = showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
+  const detectIsEb =
+    isEb ||
+    yAxisTitle.toLowerCase().includes('eb') ||
+    title.toLowerCase().includes('earnings bonus');
+  const detectIsInteger =
+    isInteger || ['prestige', 'pe', 'te'].some((t) => yAxisTitle.toLowerCase().includes(t));
+  const shouldShowNote =
+    showDataLossNote || (detectIsInteger && yAxisTitle.toLowerCase().includes('prestige'));
 
   // Collect all y values for tick generation
   const allValues: number[] = [];
-  Object.values(data).forEach(playerData => {
-    playerData.forEach(d => allValues.push(d.value));
+  Object.values(data).forEach((playerData) => {
+    playerData.forEach((d) => allValues.push(d.value));
   });
 
   // Generate formatted y-axis ticks
   const tickvals = formatYAxis ? generateTickValues(allValues, useLogScale) : null;
-  const ticktext = tickvals ? tickvals.map(v => formatTickLabel(v, detectIsEb, detectIsInteger)) : undefined;
+  const ticktext = tickvals
+    ? tickvals.map((v) => formatTickLabel(v, detectIsEb, detectIsInteger))
+    : undefined;
 
   // Split data into segments where gaps > 3 weeks don't connect
   const GAP_THRESHOLD_MS = 3 * 7 * 24 * 60 * 60 * 1000; // 3 weeks in milliseconds
@@ -92,7 +100,9 @@ export default function MultiLineChart({
       if (currentSegment.length === 0) {
         currentSegment.push(playerData[i]);
       } else {
-        const prevDate = new Date(currentSegment[currentSegment.length - 1].snapshot_date).getTime();
+        const prevDate = new Date(
+          currentSegment[currentSegment.length - 1].snapshot_date
+        ).getTime();
         const currDate = new Date(playerData[i].snapshot_date).getTime();
         const gap = currDate - prevDate;
 
@@ -111,7 +121,16 @@ export default function MultiLineChart({
   }
 
   // Predefined colors for different players
-  const colors = ['#5865f2', '#ed4245', '#57f287', '#fee75c', '#eb459e', '#9b59b6', '#3498db', '#e67e22'];
+  const colors = [
+    '#5865f2',
+    '#ed4245',
+    '#57f287',
+    '#fee75c',
+    '#eb459e',
+    '#9b59b6',
+    '#3498db',
+    '#e67e22',
+  ];
 
   const traces: Array<{
     x: string[];
@@ -132,11 +151,11 @@ export default function MultiLineChart({
     const color = colors[playerIdx % colors.length];
 
     segments.forEach((segment, segmentIdx) => {
-      const hoverText = segment.map(d => formatTickLabel(d.value, detectIsEb, detectIsInteger));
-      
+      const hoverText = segment.map((d) => formatTickLabel(d.value, detectIsEb, detectIsInteger));
+
       traces.push({
-        x: segment.map(d => d.snapshot_date),
-        y: segment.map(d => d.value),
+        x: segment.map((d) => d.snapshot_date),
+        y: segment.map((d) => d.value),
         type: 'scatter' as const,
         mode: 'lines+markers' as const,
         name: playerName,
@@ -166,11 +185,13 @@ export default function MultiLineChart({
           yaxis: {
             title: yAxisTitle,
             type: useLogScale ? 'log' : 'linear',
-            ...(tickvals && ticktext ? {
-              tickmode: 'array' as const,
-              tickvals: tickvals,
-              ticktext: ticktext,
-            } : {}),
+            ...(tickvals && ticktext
+              ? {
+                  tickmode: 'array' as const,
+                  tickvals: tickvals,
+                  ticktext: ticktext,
+                }
+              : {}),
           },
           hovermode: 'x unified',
           height: 500,
@@ -195,11 +216,20 @@ export default function MultiLineChart({
         style={{ width: '100%' }}
       />
       {shouldShowNote && (
-        <p style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderLeft: '4px solid #f59e0b', fontSize: '0.9rem', color: '#92400e' }}>
-          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss of data.
+        <p
+          style={{
+            marginTop: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#fef3c7',
+            borderLeft: '4px solid #f59e0b',
+            fontSize: '0.9rem',
+            color: '#92400e',
+          }}
+        >
+          <strong>Note:</strong> Any gaps in the data of prestige count are likely because of a loss
+          of data.
         </p>
       )}
     </>
   );
 }
-

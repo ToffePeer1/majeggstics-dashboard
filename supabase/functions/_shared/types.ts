@@ -2,7 +2,7 @@
 // Shared Type Definitions
 // ============================================================================
 // Common types used across edge functions for snapshot management
-import { Database } from "./database.types.ts";
+import { Database } from './database.types.ts';
 
 // ============================================================================
 // Quick DB types
@@ -12,8 +12,6 @@ export type LeaderboardPlayer = Database['public']['Tables']['leaderboard_cache'
 
 export type PlayerSnapshot = Database['public']['Tables']['player_snapshots']['Row'];
 export type SnapshotSaveMetadata = Database['public']['Tables']['snapshot_save_metadata']['Row'];
-
-
 
 /**
  * Player data from the Bot API
@@ -77,24 +75,24 @@ export interface LeaderboardCacheEntry {
  */
 export interface SnapshotDecision {
   shouldSave: boolean;
-  
+
   // Sync statistics
   syncPercentage: number; // e.g., 99.5
   playersInSyncWindow: number;
   totalNonExcludedPlayers: number;
   totalPlayersReceived: number;
   excludedPlayerCount: number;
-  
+
   // Timing
   lowestUpdatedAt: Date | null;
   timeSinceLowestUpdateHours: number;
   hoursSinceLastSave: number;
-  
+
   // Decision metadata
   reason: string;
   isPendingSync: boolean; // true if waiting for 15min retry
   pendingAttemptCount: number;
-  
+
   // Missing players (for partial sync warnings)
   missingPlayers?: Array<{
     discord_id: string;
@@ -142,7 +140,6 @@ export interface EmailResult {
   responseData?: unknown;
 }
 
-
 /**
  * Update player data request payload
  */
@@ -151,11 +148,11 @@ export interface UpdatePlayerDataRequest {
   internalCall?: boolean;
   players?: BotApiPlayer[];
   snapshotDate?: string;
-  
+
   // Force update flag (for dry-run testing)
   forceUpdate?: boolean;
   dryRun?: boolean;
-  
+
   // Email options
   sendEmail?: boolean;
   emailContext?: {

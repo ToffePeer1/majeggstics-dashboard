@@ -1,6 +1,6 @@
 // Some shared util functions
 import { createClient, SupabaseClient as GenericSupabaseClient } from 'supabase';
-import { Database } from "./database.types.ts";
+import { Database } from './database.types.ts';
 export type SupabaseClient = GenericSupabaseClient<Database>;
 
 export function getSupabaseClient(): SupabaseClient {
@@ -15,6 +15,5 @@ export function getSupabaseClient(): SupabaseClient {
 export function getEnvVariable(name: string): string {
   const value = Deno.env.get(name);
   // Return empty if not set, let the caller handle it if it's required
-  return value || ""
+  return value || '';
 }
-

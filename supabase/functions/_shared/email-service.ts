@@ -9,26 +9,24 @@ import type { Json } from './database.types.ts';
 
 /**
  * Send email via Resend API
- * 
+ *
  * @param emailData - Email configuration and content
  * @param resendApiKey - Resend API key from environment
  * @returns Result object with success status
  */
-export async function sendEmail(
-  emailData: EmailData,
-  resendApiKey: string
-): Promise<EmailResult> {
+export async function sendEmail(emailData: EmailData, resendApiKey: string): Promise<EmailResult> {
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
+        Authorization: `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: emailData.type === 'week_no_update' || emailData.type === 'sync_failed'
-          ? 'Majeggstics Alerts <onboarding@resend.dev>' // Use Resend's pre-verified onboarding domain
-          : 'Majeggstics Dashboard <onboarding@resend.dev>',
+        from:
+          emailData.type === 'week_no_update' || emailData.type === 'sync_failed'
+            ? 'Majeggstics Alerts <onboarding@resend.dev>' // Use Resend's pre-verified onboarding domain
+            : 'Majeggstics Dashboard <onboarding@resend.dev>',
         to: emailData.recipient,
         subject: emailData.subject,
         text: emailData.bodyText,
@@ -61,7 +59,7 @@ export async function sendEmail(
 
 /**
  * Log email to database
- * 
+ *
  * @param supabase - Supabase client
  * @param emailData - Email data
  * @param result - Email sending result
@@ -72,19 +70,17 @@ export async function logEmail(
   result: EmailResult
 ): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('email_log')
-      .insert({
-        email_type: emailData.type,
-        recipient: emailData.recipient,
-        subject: emailData.subject,
-        body_preview: emailData.bodyText.substring(0, 200),
-        success: result.success,
-        response_data: result.responseData as Json,
-        error_message: result.error || null,
-        related_snapshot_date: emailData.relatedSnapshotDate || null,
-        metadata: (emailData.metadata as Json) || null,
-      });
+    const { error } = await supabase.from('email_log').insert({
+      email_type: emailData.type,
+      recipient: emailData.recipient,
+      subject: emailData.subject,
+      body_preview: emailData.bodyText.substring(0, 200),
+      success: result.success,
+      response_data: result.responseData as Json,
+      error_message: result.error || null,
+      related_snapshot_date: emailData.relatedSnapshotDate || null,
+      metadata: (emailData.metadata as Json) || null,
+    });
 
     if (error) {
       console.error('Failed to log email:', error);
@@ -110,7 +106,7 @@ export function createSnapshotSavedEmail(
   }
 ): EmailData {
   const subject = `✅ Snapshot saved - ${snapshotDate} - ${playerCount} players`;
-  
+
   const bodyText = `
 New snapshot saved successfully.
 
@@ -233,11 +229,15 @@ export function createPartialSyncEmail(
 ): EmailData {
   const missingCount = decision.missingPlayers?.length || 0;
   const subject = `⚠️ Snapshot saved (partial sync) - ${decision.syncPercentage.toFixed(1)}% - ${missingCount} missing players`;
-  
-  const missingPlayersList = decision.missingPlayers
-    ?.map(p => `  - ${p.ign} (${p.discord_id}): Updated ${p.timeDifferenceHours.toFixed(2)} hours after others`)
-    .join('\n') || '';
-  
+
+  const missingPlayersList =
+    decision.missingPlayers
+      ?.map(
+        (p) =>
+          `  - ${p.ign} (${p.discord_id}): Updated ${p.timeDifferenceHours.toFixed(2)} hours after others`
+      )
+      .join('\n') || '';
+
   const bodyText = `
 Snapshot saved after detecting partial synchronization.
 
@@ -265,9 +265,13 @@ Consider adding missing players to the excluded_players table if their save data
 View dashboard: https://majeggstics-dashboard.vercel.app/
 `.trim();
 
-  const missingPlayersHtml = decision.missingPlayers
-    ?.map(p => `<div class="metric"><span class="metric-label">${p.ign} (${p.discord_id})</span><span class="metric-value">${p.timeDifferenceHours.toFixed(2)} hours late</span></div>`)
-    .join('') || '<p>None</p>';
+  const missingPlayersHtml =
+    decision.missingPlayers
+      ?.map(
+        (p) =>
+          `<div class="metric"><span class="metric-label">${p.ign} (${p.discord_id})</span><span class="metric-value">${p.timeDifferenceHours.toFixed(2)} hours late</span></div>`
+      )
+      .join('') || '<p>None</p>';
 
   const bodyHtml = `
 <!DOCTYPE html>
@@ -364,7 +368,7 @@ export function createWeekNoUpdateEmail(
   lastSavedAt: string | null
 ): EmailData {
   const subject = `🚨 Alert: No snapshot saved in 7+ days`;
-  
+
   const bodyText = `
 No snapshot has been saved in over 7 days.
 

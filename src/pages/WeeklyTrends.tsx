@@ -30,7 +30,7 @@ function getColumnName(metric: MetricKey, aggregate: AggregateKey): keyof Weekly
 
 function formatMetricValue(value: number | null | undefined, metric: MetricKey): string {
   if (value === null || value === undefined || isNaN(value)) return 'N/A';
-  
+
   switch (metric) {
     case 'eb':
       return bigNumberToString(value) + '%';
@@ -49,7 +49,7 @@ export default function WeeklyTrends() {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const [selectedAggregate, setSelectedAggregate] = useState<AggregateKey>('avg');
   const [showActiveOnly, setShowActiveOnly] = useState<boolean>(false);
-  
+
   const { data: stats, isLoading, error, refetch } = useWeeklyStatistics();
 
   if (isLoading) {
@@ -78,27 +78,37 @@ export default function WeeklyTrends() {
   // Get latest stats
   const latestStats = stats[stats.length - 1];
   const totalSnapshots = stats.length;
-  const currentPlayerCount = showActiveOnly ? (latestStats?.active_player_count || 0) : (latestStats?.player_count || 0);
-  const avgPlayerCount = Math.round(stats.reduce((sum, s) => sum + (showActiveOnly ? (s.active_player_count || 0) : s.player_count), 0) / stats.length);
-  const maxPlayerCount = Math.max(...stats.map(s => showActiveOnly ? (s.active_player_count || 0) : s.player_count));
+  const currentPlayerCount = showActiveOnly
+    ? latestStats?.active_player_count || 0
+    : latestStats?.player_count || 0;
+  const avgPlayerCount = Math.round(
+    stats.reduce(
+      (sum, s) => sum + (showActiveOnly ? s.active_player_count || 0 : s.player_count),
+      0
+    ) / stats.length
+  );
+  const maxPlayerCount = Math.max(
+    ...stats.map((s) => (showActiveOnly ? s.active_player_count || 0 : s.player_count))
+  );
 
   // Player growth calculation
   const firstStats = stats[0];
-  const firstPlayerCount = showActiveOnly ? firstStats.active_player_count : firstStats.player_count;
+  const firstPlayerCount = showActiveOnly
+    ? firstStats.active_player_count
+    : firstStats.player_count;
   const playerGrowth = currentPlayerCount - firstPlayerCount;
-  const playerGrowthPct = firstPlayerCount > 0 
-    ? ((playerGrowth / firstPlayerCount) * 100).toFixed(1) 
-    : '0';
+  const playerGrowthPct =
+    firstPlayerCount > 0 ? ((playerGrowth / firstPlayerCount) * 100).toFixed(1) : '0';
   const avgWeeklyGrowth = (playerGrowth / stats.length).toFixed(1);
 
   // Prepare player count chart data
-  const playerCountData = stats.map(s => ({
+  const playerCountData = stats.map((s) => ({
     snapshot_date: s.snapshot_date,
-    value: showActiveOnly ? (s.active_player_count || 0) : s.player_count,
+    value: showActiveOnly ? s.active_player_count || 0 : s.player_count,
   }));
 
   // Prepare grade distribution data
-  const gradeDistData = stats.map(s => ({
+  const gradeDistData = stats.map((s) => ({
     snapshot_date: s.snapshot_date,
     AAA: s.grade_AAA,
     AA: s.grade_AA,
@@ -109,11 +119,11 @@ export default function WeeklyTrends() {
 
   // Prepare community stats chart data
   const columnName = getColumnName(selectedMetric, selectedAggregate);
-  const communityStatsData = stats.map(s => ({
-  snapshot_date: s.snapshot_date,
-  value: s[columnName] !== null ? Number(s[columnName]) : null,
+  const communityStatsData = stats.map((s) => ({
+    snapshot_date: s.snapshot_date,
+    value: s[columnName] !== null ? Number(s[columnName]) : null,
   }));
-  
+
   const latestMetricValue = latestStats[columnName] as number;
   const useLogScale = ['eb', 'se', 'te'].includes(selectedMetric) && selectedAggregate !== 'total';
 
@@ -122,7 +132,14 @@ export default function WeeklyTrends() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Community Weekly Trends</h1>
 
       {/* Summary Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          marginBottom: '2rem',
+        }}
+      >
         <div className="metric-card">
           <div className="metric-label">Total Snapshots</div>
           <div className="metric-value">{totalSnapshots}</div>
@@ -158,7 +175,7 @@ export default function WeeklyTrends() {
             <span>Show active players only</span>
           </label>
         </div>
-        
+
         <ProgressionChart
           data={playerCountData}
           title={`${showActiveOnly ? 'Active' : 'All'} Players Over Time`}
@@ -166,13 +183,24 @@ export default function WeeklyTrends() {
           useLogScale={false}
           showMarkers={true}
         />
-        
+
         {stats.length >= 2 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '1rem',
+              marginTop: '1.5rem',
+            }}
+          >
             <div className="metric-card">
               <div className="metric-label">Player Growth</div>
-              <div className="metric-value" style={{ color: playerGrowth >= 0 ? '#4ade80' : '#f87171' }}>
-                {playerGrowth >= 0 ? '+' : ''}{formatInteger(playerGrowth)}
+              <div
+                className="metric-value"
+                style={{ color: playerGrowth >= 0 ? '#4ade80' : '#f87171' }}
+              >
+                {playerGrowth >= 0 ? '+' : ''}
+                {formatInteger(playerGrowth)}
                 <span style={{ fontSize: '0.875rem', marginLeft: '0.5rem' }}>
                   ({playerGrowthPct}%)
                 </span>
@@ -180,8 +208,12 @@ export default function WeeklyTrends() {
             </div>
             <div className="metric-card">
               <div className="metric-label">Avg Weekly Growth</div>
-              <div className="metric-value" style={{ color: Number(avgWeeklyGrowth) >= 0 ? '#4ade80' : '#f87171' }}>
-                {Number(avgWeeklyGrowth) >= 0 ? '+' : ''}{avgWeeklyGrowth}
+              <div
+                className="metric-value"
+                style={{ color: Number(avgWeeklyGrowth) >= 0 ? '#4ade80' : '#f87171' }}
+              >
+                {Number(avgWeeklyGrowth) >= 0 ? '+' : ''}
+                {avgWeeklyGrowth}
               </div>
             </div>
           </div>
@@ -191,11 +223,8 @@ export default function WeeklyTrends() {
       {/* Grade Distribution Over Time */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Grade Distribution Over Time</h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <GradeDistributionChart
-          data={gradeDistData}
-          title="Grade Distribution Over Time"
-        />
-        
+        <GradeDistributionChart data={gradeDistData} title="Grade Distribution Over Time" />
+
         {/* Current Grade Distribution Table */}
         <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>Current Grade Distribution</h3>
         <div style={{ overflowX: 'auto' }}>
@@ -207,11 +236,26 @@ export default function WeeklyTrends() {
               </tr>
             </thead>
             <tbody>
-              <tr><td>AAA</td><td>{formatInteger(latestStats.grade_AAA)}</td></tr>
-              <tr><td>AA</td><td>{formatInteger(latestStats.grade_AA)}</td></tr>
-              <tr><td>A</td><td>{formatInteger(latestStats.grade_A)}</td></tr>
-              <tr><td>B</td><td>{formatInteger(latestStats.grade_B)}</td></tr>
-              <tr><td>C</td><td>{formatInteger(latestStats.grade_C)}</td></tr>
+              <tr>
+                <td>AAA</td>
+                <td>{formatInteger(latestStats.grade_AAA)}</td>
+              </tr>
+              <tr>
+                <td>AA</td>
+                <td>{formatInteger(latestStats.grade_AA)}</td>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>{formatInteger(latestStats.grade_A)}</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>{formatInteger(latestStats.grade_B)}</td>
+              </tr>
+              <tr>
+                <td>C</td>
+                <td>{formatInteger(latestStats.grade_C)}</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -221,7 +265,14 @@ export default function WeeklyTrends() {
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Community Statistics Trends</h2>
       <div className="card" style={{ marginBottom: '2rem' }}>
         {/* Selectors */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+          }}
+        >
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
               Select metric to visualize:
@@ -233,7 +284,9 @@ export default function WeeklyTrends() {
               style={{ width: '100%' }}
             >
               {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+                <option key={key} value={key}>
+                  {label}
+                </option>
               ))}
             </select>
           </div>
@@ -248,7 +301,9 @@ export default function WeeklyTrends() {
               style={{ width: '100%' }}
             >
               {Object.entries(AGGREGATE_OPTIONS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+                <option key={key} value={key}>
+                  {label}
+                </option>
               ))}
             </select>
           </div>

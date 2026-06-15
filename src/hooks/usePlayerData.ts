@@ -1,7 +1,15 @@
 // Custom hooks for data fetching using React Query
 
 import { useQuery } from '@tanstack/react-query';
-import { TABLE_PLAYER_SNAPSHOTS, TABLE_SNAPSHOT_METADATA, TABLE_WEEKLY_STATISTICS, VIEW_UNIQUE_PLAYERS_LATEST, CACHE_TTL, ENV, EDGE_FUNCTIONS } from '@/config/constants';
+import {
+  TABLE_PLAYER_SNAPSHOTS,
+  TABLE_SNAPSHOT_METADATA,
+  TABLE_WEEKLY_STATISTICS,
+  VIEW_UNIQUE_PLAYERS_LATEST,
+  CACHE_TTL,
+  ENV,
+  EDGE_FUNCTIONS,
+} from '@/config/constants';
 import type { PlayerSnapshot, SnapshotMetadata, PlayerListItem, WeeklyStatistics } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { preprocessPlayerData } from '@/utils/dataProcessing';
@@ -9,10 +17,10 @@ import { calculatePlayerMER, calculatePlayerJER } from '@/utils/eb';
 
 /**
  * Fetch all player snapshots for the current user
- * 
+ *
  * SECURITY: RLS policy ensures users only see their own data:
  * USING (discord_id = (auth.jwt() ->> 'discord_id'))
- * 
+ *
  * The discord_id is extracted from the JWT's custom claim.
  * Users cannot forge JWTs because they don't have the signing key.
  */
@@ -27,7 +35,7 @@ export function usePlayerSnapshots(discordId: string | null) {
 
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       // The RLS policy will automatically filter to only show this user's data
       // We include the discord_id filter here for clarity and performance
       const { data, error } = await client
@@ -35,11 +43,11 @@ export function usePlayerSnapshots(discordId: string | null) {
         .select('*')
         .eq('discord_id', discordId)
         .order('snapshot_date', { ascending: false });
-      
+
       if (error) throw error;
       const result = (data || []) as PlayerSnapshot[];
       // Preprocess data: normalize grade and fill missing farmer roles
-      return result.map(snapshot => preprocessPlayerData(snapshot));
+      return result.map((snapshot) => preprocessPlayerData(snapshot));
     },
     // Only run when authenticated and discordId is provided
     enabled: isAuthenticated && !!discordId,
@@ -57,7 +65,7 @@ export function usePlayerList() {
     queryFn: async () => {
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       // Use the materialized view to get unique players efficiently
       // Paginate through all results like the Streamlit version
       const allData: Array<{ discord_id: string; ign: string; discord_name: string }> = [];
@@ -76,7 +84,7 @@ export function usePlayerList() {
         if (!data || data.length === 0) break;
 
         allData.push(...data);
-        
+
         // Break if we got fewer rows than requested (last page)
         if (data.length < pageSize) break;
       }
@@ -88,7 +96,9 @@ export function usePlayerList() {
       }));
 
       // Sort by label (case-insensitive)
-      return uniquePlayers.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
+      return uniquePlayers.sort((a, b) =>
+        a.label.toLowerCase().localeCompare(b.label.toLowerCase())
+      );
     },
     // Only run when authenticated
     enabled: isAuthenticated,
@@ -105,7 +115,7 @@ export function useLatestSnapshotDate() {
     queryFn: async () => {
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       const { data, error } = await client
         .from(TABLE_SNAPSHOT_METADATA)
         .select('snapshot_date')
@@ -130,7 +140,7 @@ export function useSnapshotMetadata() {
     queryFn: async () => {
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       const { data, error } = await client
         .from(TABLE_SNAPSHOT_METADATA)
         .select('*')
@@ -153,7 +163,7 @@ export function useAllPlayerSnapshots() {
     queryFn: async () => {
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       const { data, error } = await client
         .from(TABLE_PLAYER_SNAPSHOTS)
         .select('snapshot_date, eb, se, pe, num_prestiges, grade')
@@ -162,7 +172,7 @@ export function useAllPlayerSnapshots() {
       if (error) throw error;
       const result = (data || []) as PlayerSnapshot[];
       // Preprocess data: normalize grade and fill missing farmer roles
-      return result.map(snapshot => preprocessPlayerData(snapshot));
+      return result.map((snapshot) => preprocessPlayerData(snapshot));
     },
     enabled: isAuthenticated,
     staleTime: CACHE_TTL.PLAYER_DATA,
@@ -180,7 +190,7 @@ export function usePlayerComparison(discordIds: string[]) {
 
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       const results: { [key: string]: PlayerSnapshot[] } = {};
 
       for (const discordId of discordIds) {
@@ -192,7 +202,9 @@ export function usePlayerComparison(discordIds: string[]) {
 
         if (error) throw error;
         // Preprocess data: normalize grade and fill missing farmer roles
-        results[discordId] = ((data || []) as PlayerSnapshot[]).map(snapshot => preprocessPlayerData(snapshot));
+        results[discordId] = ((data || []) as PlayerSnapshot[]).map((snapshot) =>
+          preprocessPlayerData(snapshot)
+        );
       }
 
       return results;
@@ -211,7 +223,7 @@ export function useWeeklyStatistics() {
     queryFn: async () => {
       const client = getAuthenticatedClient();
       if (!client) throw new Error('Not authenticated');
-      
+
       const { data, error } = await client
         .from(TABLE_WEEKLY_STATISTICS)
         .select('*')
@@ -260,11 +272,11 @@ export interface CachedLeaderboardResponse {
 
 /**
  * Fetch cached leaderboard data from the Edge Function
- * 
+ *
  * This hook fetches current/live player data with automatic caching:
  * - If data is fresh (< 15 minutes old): returns cached data instantly
  * - If data is stale (>= 15 minutes old): fetches fresh data from bot API
- * 
+ *
  * The Edge Function handles:
  * - JWT validation
  * - Access level filtering (non-admins don't see num_prestiges)
@@ -279,11 +291,11 @@ export function useCachedLeaderboard() {
       if (!jwt) throw new Error('Not authenticated');
 
       const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_LEADERBOARD}`;
-      
+
       const response = await fetch(edgeFunctionUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${jwt}`,
+          Authorization: `Bearer ${jwt}`,
           'Content-Type': 'application/json',
         },
       });
@@ -321,14 +333,14 @@ export interface PlayerCurrentStatsResponse {
 
 /**
  * Fetch a player's current stats from the leaderboard cache
- * 
+ *
  * This hook fetches current/live stats for a specific player:
  * - Data comes from leaderboard_cache (refreshed every 15 minutes)
  * - Single player query (efficient - no pagination needed)
  * - Returns null if player not in cache yet
- * 
+ *
  * @param discordId - Discord ID of player to fetch (optional - uses JWT user if not provided)
- * 
+ *
  * The Edge Function handles:
  * - JWT validation
  * - If discordId provided: only admins can query other players
@@ -349,11 +361,11 @@ export function usePlayerCurrentStats(discordId?: string | null) {
       }
 
       const edgeFunctionUrl = `${ENV.SUPABASE_URL}${EDGE_FUNCTIONS.GET_PLAYER_CURRENT_STATS}?${params}`;
-      
+
       const response = await fetch(edgeFunctionUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${jwt}`,
+          Authorization: `Bearer ${jwt}`,
           'Content-Type': 'application/json',
         },
       });
@@ -364,7 +376,7 @@ export function usePlayerCurrentStats(discordId?: string | null) {
       }
 
       const data: PlayerCurrentStatsResponse = await response.json();
-      
+
       // Capitalize grade for consistency and calculate MER/JER if player exists
       if (data.player) {
         if (data.player.grade) {
@@ -374,7 +386,7 @@ export function usePlayerCurrentStats(discordId?: string | null) {
         data.player.mer = calculatePlayerMER(data.player.pe, data.player.se);
         data.player.jer = calculatePlayerJER(data.player.pe, data.player.se, data.player.te);
       }
-      
+
       return data;
     },
     enabled: isAuthenticated && !!jwt,

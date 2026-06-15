@@ -1,61 +1,61 @@
-import { getEnvVariable, getSupabaseClient } from '../_shared/utils.ts'
-import { verifyJWT, isOwner } from '../_shared/auth.ts'
+import { getEnvVariable, getSupabaseClient } from '../_shared/utils.ts';
+import { verifyJWT, isOwner } from '../_shared/auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+};
 
-type OwnerAction = 'force-update' | 'dry-run' | 'get-status' | 'mark-saved'
+type OwnerAction = 'force-update' | 'dry-run' | 'get-status' | 'mark-saved';
 
 interface OwnerActionRequest {
-  action: OwnerAction
+  action: OwnerAction;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   }
 
   try {
-    const jwtSecret = getEnvVariable('JWT_SECRET')
-    const supabase = getSupabaseClient()
+    const jwtSecret = getEnvVariable('JWT_SECRET');
+    const supabase = getSupabaseClient();
 
-    const authHeader = req.headers.get('Authorization')
-    const payload = await verifyJWT(authHeader, jwtSecret)
+    const authHeader = req.headers.get('Authorization');
+    const payload = await verifyJWT(authHeader, jwtSecret);
 
     if (!isOwner(payload)) {
       return new Response(JSON.stringify({ error: 'Unauthorized: Owner access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      });
     }
 
-    const body: OwnerActionRequest = await req.json()
-    const { action } = body
+    const body: OwnerActionRequest = await req.json();
+    const { action } = body;
 
     if (action === 'get-status') {
       const { data, error } = await supabase
         .from('snapshot_save_metadata')
         .select('*')
         .eq('id', 1)
-        .single()
+        .single();
 
       if (error) {
-        throw new Error(`Failed to fetch status: ${error.message}`)
+        throw new Error(`Failed to fetch status: ${error.message}`);
       }
 
       return new Response(JSON.stringify({ success: true, data }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      });
     }
 
     if (action === 'mark-saved') {
@@ -68,13 +68,13 @@ Deno.serve(async (req: Request) => {
           pending_sync_attempt_count: 0,
           pending_sync_metadata: null,
         })
-        .eq('id', 1)
+        .eq('id', 1);
 
-      if (error) throw new Error(`Failed to update metadata: ${error.message}`)
+      if (error) throw new Error(`Failed to update metadata: ${error.message}`);
 
       return new Response(JSON.stringify({ success: true, message: 'Marked as saved now' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      });
     }
 
     if (action === 'force-update' || action === 'dry-run') {
@@ -84,31 +84,31 @@ Deno.serve(async (req: Request) => {
           dryRun: action === 'dry-run',
           sendEmail: action === 'force-update',
         },
-      })
+      });
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
+        });
       }
 
       return new Response(JSON.stringify(data), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      });
     }
 
     return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   } catch (error) {
-    console.error('Owner action error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Owner action error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: 'Action failed', details: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   }
-})
+});

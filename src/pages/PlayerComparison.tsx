@@ -14,7 +14,12 @@ export default function PlayerComparison() {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>('eb');
   const [activePlayerTab, setActivePlayerTab] = useState<string | null>(null);
   const { data: playerList, isLoading: listLoading } = usePlayerList();
-  const { data: comparisonData, isLoading: dataLoading, error, refetch } = usePlayerComparison(selectedPlayers);
+  const {
+    data: comparisonData,
+    isLoading: dataLoading,
+    error,
+    refetch,
+  } = usePlayerComparison(selectedPlayers);
 
   if (listLoading) {
     return <LoadingSpinner text="Loading player list..." />;
@@ -22,10 +27,7 @@ export default function PlayerComparison() {
 
   if (!playerList || playerList.length === 0) {
     return (
-      <ErrorMessage
-        title="No Players Found"
-        message="No player data available in the database."
-      />
+      <ErrorMessage title="No Players Found" message="No player data available in the database." />
     );
   }
 
@@ -36,7 +38,7 @@ export default function PlayerComparison() {
   };
 
   const handleRemovePlayer = (discordId: string) => {
-    setSelectedPlayers(selectedPlayers.filter(id => id !== discordId));
+    setSelectedPlayers(selectedPlayers.filter((id) => id !== discordId));
   };
 
   const handleClearAll = () => {
@@ -48,8 +50,8 @@ export default function PlayerComparison() {
       <div className="container">
         <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
         <p style={{ marginBottom: '1.5rem' }}>
-          Compare multiple players side-by-side to see how they stack up against each other.
-          Select up to 5 players to compare their progression and statistics.
+          Compare multiple players side-by-side to see how they stack up against each other. Select
+          up to 5 players to compare their progression and statistics.
         </p>
         <div className="card">
           <p style={{ marginBottom: '1rem' }}>Select players to compare (up to 5):</p>
@@ -58,7 +60,7 @@ export default function PlayerComparison() {
             Select at least 2 players to start comparing
           </div>
         </div>
-        
+
         {/* Instructions */}
         <details style={{ marginTop: '2rem' }}>
           <summary style={{ cursor: 'pointer', fontWeight: '600', fontSize: '1.125rem' }}>
@@ -67,21 +69,43 @@ export default function PlayerComparison() {
           <div className="card" style={{ marginTop: '1rem' }}>
             <h3>How to Compare Players</h3>
             <ol style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-              <li><strong>Select Players</strong>: Use the dropdown above to select 2-5 players</li>
-              <li><strong>View Summary</strong>: See current stats side-by-side</li>
-              <li><strong>Choose Metric</strong>: Select which statistic to compare over time</li>
-              <li><strong>Analyze Growth</strong>: View relative growth rates</li>
+              <li>
+                <strong>Select Players</strong>: Use the dropdown above to select 2-5 players
+              </li>
+              <li>
+                <strong>View Summary</strong>: See current stats side-by-side
+              </li>
+              <li>
+                <strong>Choose Metric</strong>: Select which statistic to compare over time
+              </li>
+              <li>
+                <strong>Analyze Growth</strong>: View relative growth rates
+              </li>
             </ol>
-            
+
             <h3 style={{ marginTop: '1rem' }}>Available Metrics</h3>
             <ul style={{ paddingLeft: '1.5rem', marginTop: '0.5rem' }}>
-              <li><strong>Earnings Bonus (EB)</strong>: Overall player strength</li>
-              <li><strong>Soul Eggs (SE)</strong>: Prestige currency</li>
-              <li><strong>Prophecy Eggs (PE)</strong>: Rare prestige currency</li>
-              <li><strong>Truth Eggs (TE)</strong>: Lifetime earnings</li>
-              <li><strong>Mystical Egg Ratio (MER)</strong>: MER formula</li>
-              <li><strong>Jer's Egg Ratio (JER)</strong>: JER formula</li>
-              <li><strong>Number of Prestiges</strong>: Total prestige count</li>
+              <li>
+                <strong>Earnings Bonus (EB)</strong>: Overall player strength
+              </li>
+              <li>
+                <strong>Soul Eggs (SE)</strong>: Prestige currency
+              </li>
+              <li>
+                <strong>Prophecy Eggs (PE)</strong>: Rare prestige currency
+              </li>
+              <li>
+                <strong>Truth Eggs (TE)</strong>: Lifetime earnings
+              </li>
+              <li>
+                <strong>Mystical Egg Ratio (MER)</strong>: MER formula
+              </li>
+              <li>
+                <strong>Jer's Egg Ratio (JER)</strong>: JER formula
+              </li>
+              <li>
+                <strong>Number of Prestiges</strong>: Total prestige count
+              </li>
             </ul>
           </div>
         </details>
@@ -140,7 +164,9 @@ export default function PlayerComparison() {
   }
 
   // Find the best player for each metric
-  const metrics: { [key: string]: { label: string; key: keyof PlayerSnapshot; format: (val: number) => string } } = {
+  const metrics: {
+    [key: string]: { label: string; key: keyof PlayerSnapshot; format: (val: number) => string };
+  } = {
     eb: { label: 'Earnings Bonus', key: 'eb', format: bigNumberToString },
     se: { label: 'Soul Eggs', key: 'se', format: bigNumberToString },
     pe: { label: 'Prophecy Eggs', key: 'pe', format: formatInteger },
@@ -156,8 +182,8 @@ export default function PlayerComparison() {
 
   const bestPlayers: { [key: string]: PlayerSnapshot } = {};
   Object.entries(metrics).forEach(([metricKey, { key }]) => {
-    bestPlayers[metricKey] = [...latestSnapshots].sort((a, b) => 
-      ((b[key] as number) || 0) - ((a[key] as number) || 0)
+    bestPlayers[metricKey] = [...latestSnapshots].sort(
+      (a, b) => ((b[key] as number) || 0) - ((a[key] as number) || 0)
     )[0];
   });
 
@@ -168,14 +194,14 @@ export default function PlayerComparison() {
     if (snapshots.length > 0) {
       const playerName = snapshots[0].ign;
       const filteredData = snapshots
-        .map(s => ({ 
-          snapshot_date: s.snapshot_date, 
-          value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric]
+        .map((s) => ({
+          snapshot_date: s.snapshot_date,
+          value: (s as unknown as Record<string, number | null | undefined>)[selectedMetric],
         }))
-        .filter(d => d.value != null)
-        .map(d => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
+        .filter((d) => d.value != null)
+        .map((d) => ({ snapshot_date: d.snapshot_date, value: d.value as number }))
         .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
-      
+
       // Only add player to chart if they have data for this metric
       if (filteredData.length > 0) {
         chartData[playerName] = filteredData;
@@ -198,22 +224,24 @@ export default function PlayerComparison() {
   Object.entries(comparisonData).forEach(([discordId, snapshots]) => {
     if (snapshots.length >= 2 && selectedMetric in snapshots[0]) {
       // Filter to only snapshots with valid values for this metric
-      const validSnapshots = snapshots.filter(s => {
+      const validSnapshots = snapshots.filter((s) => {
         const value = (s as unknown as Record<string, number | null | undefined>)[selectedMetric];
         return value != null && !isNaN(value) && isFinite(value);
       });
-      
+
       if (validSnapshots.length >= 2) {
-        const sorted = [...validSnapshots].sort((a, b) => 
-          new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
+        const sorted = [...validSnapshots].sort(
+          (a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
         );
         const firstValue = (sorted[0] as unknown as Record<string, number>)[selectedMetric];
-        const lastValue = (sorted[sorted.length - 1] as unknown as Record<string, number>)[selectedMetric];
-        
+        const lastValue = (sorted[sorted.length - 1] as unknown as Record<string, number>)[
+          selectedMetric
+        ];
+
         if (firstValue > 0) {
           const absoluteGrowth = lastValue - firstValue;
           const growthPct = (absoluteGrowth / firstValue) * 100;
-          
+
           growthData.push({
             player: sorted[0].ign,
             discordId,
@@ -240,20 +268,33 @@ export default function PlayerComparison() {
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem' }}>Player Comparison</h1>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
           <h3>Selected Players ({selectedPlayers.length})</h3>
           <button onClick={handleClearAll} className="button button-secondary">
             Clear All
           </button>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          {latestSnapshots.map(player => (
+          {latestSnapshots.map((player) => (
             <div key={player.discord_id} className="tag">
               {player.ign}
               <button
                 onClick={() => handleRemovePlayer(player.discord_id)}
-                style={{ marginLeft: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}
+                style={{
+                  marginLeft: '0.5rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'inherit',
+                }}
               >
                 ✕
               </button>
@@ -262,7 +303,11 @@ export default function PlayerComparison() {
         </div>
 
         {selectedPlayers.length < 5 && (
-          <PlayerSearch players={playerList} onSelect={handleAddPlayer} label="Add another player (up to 5)" />
+          <PlayerSearch
+            players={playerList}
+            onSelect={handleAddPlayer}
+            label="Add another player (up to 5)"
+          />
         )}
       </div>
 
@@ -290,42 +335,64 @@ export default function PlayerComparison() {
             </tr>
           </thead>
           <tbody>
-            {latestSnapshots.map(player => (
+            {latestSnapshots.map((player) => (
               <tr key={player.discord_id}>
-                <td><strong>{player.display_name}</strong></td>
+                <td>
+                  <strong>{player.display_name}</strong>
+                </td>
                 <td>{player.ign}</td>
-                <td style={{ 
-                  fontWeight: bestPlayers.eb?.discord_id === player.discord_id ? 'bold' : 'normal',
-                  color: bestPlayers.eb?.discord_id === player.discord_id ? '#4ade80' : 'inherit'
-                }}>
+                <td
+                  style={{
+                    fontWeight:
+                      bestPlayers.eb?.discord_id === player.discord_id ? 'bold' : 'normal',
+                    color: bestPlayers.eb?.discord_id === player.discord_id ? '#4ade80' : 'inherit',
+                  }}
+                >
                   {bigNumberToString(player.eb)}%
                   {bestPlayers.eb?.discord_id === player.discord_id && ' 🏆'}
                 </td>
-                <td style={{ 
-                  fontWeight: bestPlayers.se?.discord_id === player.discord_id ? 'bold' : 'normal',
-                  color: bestPlayers.se?.discord_id === player.discord_id ? '#4ade80' : 'inherit'
-                }}>
+                <td
+                  style={{
+                    fontWeight:
+                      bestPlayers.se?.discord_id === player.discord_id ? 'bold' : 'normal',
+                    color: bestPlayers.se?.discord_id === player.discord_id ? '#4ade80' : 'inherit',
+                  }}
+                >
                   {bigNumberToString(player.se)}
                   {bestPlayers.se?.discord_id === player.discord_id && ' 🏆'}
                 </td>
-                <td style={{ 
-                  fontWeight: bestPlayers.pe?.discord_id === player.discord_id ? 'bold' : 'normal',
-                  color: bestPlayers.pe?.discord_id === player.discord_id ? '#4ade80' : 'inherit'
-                }}>
+                <td
+                  style={{
+                    fontWeight:
+                      bestPlayers.pe?.discord_id === player.discord_id ? 'bold' : 'normal',
+                    color: bestPlayers.pe?.discord_id === player.discord_id ? '#4ade80' : 'inherit',
+                  }}
+                >
                   {formatInteger(player.pe)}
                   {bestPlayers.pe?.discord_id === player.discord_id && ' 🏆'}
                 </td>
-                <td style={{ 
-                  fontWeight: bestPlayers.te?.discord_id === player.discord_id ? 'bold' : 'normal',
-                  color: bestPlayers.te?.discord_id === player.discord_id ? '#4ade80' : 'inherit'
-                }}>
+                <td
+                  style={{
+                    fontWeight:
+                      bestPlayers.te?.discord_id === player.discord_id ? 'bold' : 'normal',
+                    color: bestPlayers.te?.discord_id === player.discord_id ? '#4ade80' : 'inherit',
+                  }}
+                >
                   {player.te != null ? formatInteger(player.te) : 'N/A'}
                   {bestPlayers.te?.discord_id === player.discord_id && player.te != null && ' 🏆'}
                 </td>
-                <td style={{ 
-                  fontWeight: bestPlayers.num_prestiges?.discord_id === player.discord_id ? 'bold' : 'normal',
-                  color: bestPlayers.num_prestiges?.discord_id === player.discord_id ? '#4ade80' : 'inherit'
-                }}>
+                <td
+                  style={{
+                    fontWeight:
+                      bestPlayers.num_prestiges?.discord_id === player.discord_id
+                        ? 'bold'
+                        : 'normal',
+                    color:
+                      bestPlayers.num_prestiges?.discord_id === player.discord_id
+                        ? '#4ade80'
+                        : 'inherit',
+                  }}
+                >
                   {formatInteger(player.num_prestiges)}
                   {bestPlayers.num_prestiges?.discord_id === player.discord_id && ' 🏆'}
                 </td>
@@ -337,7 +404,9 @@ export default function PlayerComparison() {
         </table>
       </div>
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
 
       {/* Progression Comparison */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Progression Comparison</h2>
@@ -346,18 +415,20 @@ export default function PlayerComparison() {
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
             Select metric to compare:
           </label>
-          <select 
-            value={selectedMetric} 
-            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)} 
+          <select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value as MetricKey)}
             className="select"
             style={{ maxWidth: '300px' }}
           >
             {Object.entries(METRIC_OPTIONS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
-        
+
         {Object.keys(chartData).length > 0 && (
           <MultiLineChart
             data={chartData}
@@ -368,10 +439,14 @@ export default function PlayerComparison() {
         )}
       </div>
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
 
       {/* Relative Growth */}
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Relative Growth - {metricOptions[selectedMetric]}</h2>
+      <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+        Relative Growth - {metricOptions[selectedMetric]}
+      </h2>
       {growthData.length > 0 ? (
         <div className="card" style={{ overflowX: 'auto', marginBottom: '2rem' }}>
           <table>
@@ -386,7 +461,7 @@ export default function PlayerComparison() {
               </tr>
             </thead>
             <tbody>
-              {growthData.map(row => (
+              {growthData.map((row) => (
                 <tr key={row.discordId}>
                   <td>{row.player}</td>
                   <td>{formatScientificNotation(row.startingValue)}</td>
@@ -407,14 +482,16 @@ export default function PlayerComparison() {
         </div>
       )}
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
 
       {/* Player Tabs */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Player Tabs</h2>
-      
+
       {/* Tab Navigation */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-        {latestSnapshots.map(player => (
+        {latestSnapshots.map((player) => (
           <button
             key={player.discord_id}
             onClick={() => setActivePlayerTab(player.discord_id)}
@@ -435,22 +512,37 @@ export default function PlayerComparison() {
 
             return (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '1rem',
+                    marginBottom: '1.5rem',
+                  }}
+                >
                   <div className="metric-card">
                     <div className="metric-label">IGN</div>
-                    <div className="metric-value" style={{ fontSize: '1rem' }}>{latest.ign}</div>
+                    <div className="metric-value" style={{ fontSize: '1rem' }}>
+                      {latest.ign}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">EB</div>
-                    <div className="metric-value" style={{ fontSize: '1rem' }}>{bigNumberToString(latest.eb, 3)}%</div>
+                    <div className="metric-value" style={{ fontSize: '1rem' }}>
+                      {bigNumberToString(latest.eb, 3)}%
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">PE</div>
-                    <div className="metric-value" style={{ fontSize: '1rem' }}>{formatInteger(latest.pe)}</div>
+                    <div className="metric-value" style={{ fontSize: '1rem' }}>
+                      {formatInteger(latest.pe)}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Records</div>
-                    <div className="metric-value" style={{ fontSize: '1rem' }}>{playerSnapshots.length}</div>
+                    <div className="metric-value" style={{ fontSize: '1rem' }}>
+                      {playerSnapshots.length}
+                    </div>
                   </div>
                 </div>
 
@@ -485,7 +577,9 @@ export default function PlayerComparison() {
         </div>
       )}
 
-      <hr style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }} />
+      <hr
+        style={{ margin: '2rem 0', border: 'none', borderTop: '1px solid var(--color-border)' }}
+      />
     </div>
   );
 }

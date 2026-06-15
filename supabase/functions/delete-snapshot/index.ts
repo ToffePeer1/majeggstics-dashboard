@@ -1,32 +1,32 @@
 import { verifyJWT, isAdmin } from '../_shared/auth.ts';
 import { getEnvVariable, getSupabaseClient } from '../_shared/utils.ts';
 
-Deno.serve(async (req: Request)=>{
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-secret-token'
-      }
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-secret-token',
+      },
     });
   }
   try {
     const jwtSecret = getEnvVariable('JWT_SECRET');
     const expectedToken = getEnvVariable('SECRET_TOKEN');
-    
+
     if (!jwtSecret || !expectedToken) {
       throw new Error('Missing required environment variables');
     }
-    
+
     // Authentication: Accept either secret token OR admin JWT
     const secretToken = req.headers.get('x-secret-token');
     const authHeader = req.headers.get('Authorization');
-    
+
     let authenticatedUser: string | null = null;
     let authMethod: string | null = null;
-    
+
     // Try JWT authentication first (preferred for audit trail)
     if (authHeader) {
       const jwtPayload = await verifyJWT(authHeader, jwtSecret);
@@ -36,26 +36,29 @@ Deno.serve(async (req: Request)=>{
         console.log(`Authenticated admin user: ${authenticatedUser}`);
       }
     }
-    
+
     // Fall back to secret token (legacy/external calls)
     if (!authenticatedUser && secretToken === expectedToken) {
       authenticatedUser = 'secret_token';
       authMethod = 'secret_token';
       console.log('Authenticated via secret token');
     }
-    
+
     if (!authenticatedUser) {
       console.log('Authentication failed');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Unauthorized: Requires admin JWT or valid secret token'
-      }), {
-        status: 401,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Unauthorized: Requires admin JWT or valid secret token',
+        }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
         }
-      });
+      );
     }
     // Create Supabase client with service role for admin access
     const supabase = getSupabaseClient();
@@ -63,32 +66,47 @@ Deno.serve(async (req: Request)=>{
     const body = await req.json();
     const snapshotDate = body.snapshot_date;
     if (!snapshotDate) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'snapshot_date is required in request body'
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'snapshot_date is required in request body',
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
         }
-      });
+      );
     }
-    console.log(`User ${authenticatedUser} (via ${authMethod}) deleting snapshot for date: ${snapshotDate}`);
-    
+    console.log(
+      `User ${authenticatedUser} (via ${authMethod}) deleting snapshot for date: ${snapshotDate}`
+    );
+
     // Delete from player_snapshots
-    const { data: _deletedSnapshots, error: snapshotError, count: snapshotCount } = await supabase.from('player_snapshots').delete({
-      count: 'exact'
-    }).eq('snapshot_date', snapshotDate);
+    const {
+      data: _deletedSnapshots,
+      error: snapshotError,
+      count: snapshotCount,
+    } = await supabase
+      .from('player_snapshots')
+      .delete({
+        count: 'exact',
+      })
+      .eq('snapshot_date', snapshotDate);
     if (snapshotError) {
       throw new Error(`Failed to delete player_snapshots: ${snapshotError.message}`);
     }
     // Delete from snapshot_metadata
-    const { error: metaError } = await supabase.from('snapshot_metadata').delete().eq('snapshot_date', snapshotDate);
+    const { error: metaError } = await supabase
+      .from('snapshot_metadata')
+      .delete()
+      .eq('snapshot_date', snapshotDate);
     if (metaError) {
       console.warn(`Failed to delete snapshot_metadata: ${metaError.message}`);
     }
-    
+
     // Log the deletion for audit trail
     const auditLog = {
       action: 'delete_snapshot',
@@ -98,9 +116,9 @@ Deno.serve(async (req: Request)=>{
       auth_method: authMethod,
       timestamp: new Date().toISOString(),
     };
-    
+
     console.log('Audit log:', JSON.stringify(auditLog));
-    
+
     const response = {
       success: true,
       snapshotDate,
@@ -112,21 +130,24 @@ Deno.serve(async (req: Request)=>{
     return new Response(JSON.stringify(response), {
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (error) {
     console.error('Error in delete-snapshot:', error);
     const errorMsg = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: errorMsg
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMsg,
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       }
-    });
+    );
   }
 });

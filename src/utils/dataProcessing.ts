@@ -10,19 +10,19 @@ import { EBtoRole, calculatePlayerMER, calculatePlayerJER } from '@/utils/eb';
  */
 export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
   const processed = { ...snapshot };
-  
+
   // Capitalize grade for consistency
   if (processed.grade) {
     processed.grade = processed.grade.toUpperCase();
   }
-  
+
   // Fill in missing farmer role from EB
   if (!processed.farmer_role || processed.farmer_role.trim() === '') {
     if (processed.eb != null) {
       processed.farmer_role = EBtoRole(processed.eb);
     }
   }
-  
+
   // Calculate MER if not present or invalid
   if (processed.mer == null || isNaN(processed.mer)) {
     if (processed.pe != null && processed.se != null) {
@@ -31,7 +31,7 @@ export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
       processed.mer = 0;
     }
   }
-  
+
   // Calculate JER if not present or invalid
   if (processed.jer == null || isNaN(processed.jer)) {
     if (processed.pe != null && processed.se != null) {
@@ -40,7 +40,7 @@ export function preprocessPlayerData(snapshot: PlayerSnapshot): PlayerSnapshot {
       processed.jer = 0;
     }
   }
-  
+
   return processed;
 }
 
@@ -68,8 +68,8 @@ export function calculateWeeklyGains(
   valueColumn: keyof PlayerSnapshot
 ): Array<PlayerSnapshot & { gain: number; gainPct: number }> {
   // Filter to only snapshots with valid values for this column
-  const validSnapshots = snapshots.filter(s => s[valueColumn] != null);
-  
+  const validSnapshots = snapshots.filter((s) => s[valueColumn] != null);
+
   const sorted = [...validSnapshots].sort((a, b) => {
     return new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime();
   });
@@ -92,15 +92,11 @@ export function filterDateRange(
   snapshots: PlayerSnapshot[],
   weeksBack: number = 52
 ): PlayerSnapshot[] {
-  const maxDate = Math.max(
-    ...snapshots.map((s) => new Date(s.snapshot_date).getTime())
-  );
+  const maxDate = Math.max(...snapshots.map((s) => new Date(s.snapshot_date).getTime()));
   const cutoffDate = new Date(maxDate);
   cutoffDate.setDate(cutoffDate.getDate() - weeksBack * 7);
 
-  return snapshots.filter(
-    (s) => new Date(s.snapshot_date).getTime() >= cutoffDate.getTime()
-  );
+  return snapshots.filter((s) => new Date(s.snapshot_date).getTime() >= cutoffDate.getTime());
 }
 
 export function calculateGrowth(
@@ -108,8 +104,8 @@ export function calculateGrowth(
   metric: keyof PlayerSnapshot
 ): GrowthData | null {
   // Filter to only snapshots with valid values for this metric
-  const validSnapshots = snapshots.filter(s => s[metric] != null);
-  
+  const validSnapshots = snapshots.filter((s) => s[metric] != null);
+
   if (validSnapshots.length < 2) {
     return null;
   }

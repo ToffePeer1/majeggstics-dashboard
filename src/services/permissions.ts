@@ -2,15 +2,15 @@ import type { AccessLevel, DiscordUser } from '@/types';
 
 /**
  * Permissions Service
- * 
+ *
  * Handles access level determination for the application.
- * 
+ *
  * SECURITY NOTE:
  * Access level checks on the frontend are for UI purposes only.
  * The real security comes from:
  * 1. The Edge Function validating Discord guild membership and roles
  * 2. Row Level Security (RLS) policies in Supabase
- * 
+ *
  * The JWT's access_level claim is set by the Edge Function after verifying
  * the user's Discord roles. This claim is used by RLS policies to filter data.
  * Users cannot modify this claim because JWTs are cryptographically signed.
@@ -21,7 +21,10 @@ import type { AccessLevel, DiscordUser } from '@/types';
  * The access level comes from the JWT which was set by the Edge Function
  * after verifying Discord guild membership and roles
  */
-export function getUserAccessLevel(_user: DiscordUser | null, accessLevel: AccessLevel | null): AccessLevel {
+export function getUserAccessLevel(
+  _user: DiscordUser | null,
+  accessLevel: AccessLevel | null
+): AccessLevel {
   // Access level is determined server-side and included in the JWT
   return accessLevel || 'user';
 }

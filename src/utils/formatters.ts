@@ -133,7 +133,10 @@ export function formatSeValue(value: number | null | undefined, decimals: number
   }
 }
 
-export function formatScientificNotation(value: number | null | undefined, precision: number = 3): string {
+export function formatScientificNotation(
+  value: number | null | undefined,
+  precision: number = 3
+): string {
   if (value === null || value === undefined) {
     return '';
   }
@@ -188,26 +191,26 @@ export function formatPercentage(value: number | null | undefined, precision: nu
  * Format an ISO 8601 date string into a more readable format
  * @param dateString ISO 8601 date string
  * @returns Formatted date string
- * 
+ *
  * @example
  * formatLastUpdated('2024-08-15T14:30:00Z') // "August 15th, 2:30 PM"
  */
 export function formatLastUpdated(dateString: string): string {
   const date = new Date(dateString);
-  
+
   const month = date.toLocaleString(undefined, { month: 'long' });
   const day = date.getDate();
-  
+
   const ordinal = (n: number) => {
     const s = ['th', 'st', 'nd', 'rd'];
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
-  
-  const time = date.toLocaleString(undefined, { 
-    hour: 'numeric', 
+
+  const time = date.toLocaleString(undefined, {
+    hour: 'numeric',
     minute: '2-digit',
   });
-  
+
   return `${month} ${ordinal(day)}, ${time}`;
 }

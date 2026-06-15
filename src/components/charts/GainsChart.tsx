@@ -14,14 +14,14 @@ export default function GainsChart({ data, title = 'Weekly Gains' }: GainsChartP
     );
   }
 
-  const colors = data.map(d => (d.gain > 0 ? '#4ade80' : '#f87171'));
+  const colors = data.map((d) => (d.gain > 0 ? '#4ade80' : '#f87171'));
 
   return (
     <Plot
       data={[
         {
-          x: data.map(d => d.snapshot_date),
-          y: data.map(d => d.gain),
+          x: data.map((d) => d.snapshot_date),
+          y: data.map((d) => d.gain),
           type: 'bar',
           marker: { color: colors },
         },
@@ -54,4 +54,3 @@ export default function GainsChart({ data, title = 'Weekly Gains' }: GainsChartP
     />
   );
 }
-
