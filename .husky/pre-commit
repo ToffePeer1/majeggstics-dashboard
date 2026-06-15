@@ -1,0 +1,33 @@
+#!/bin/sh
+set -e
+
+# Fix end-of-file newlines for staged source files
+git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|css|json|md|yaml|yml)$' | while IFS= read -r file; do
+  [ -f "$file" ] || continue
+  # Add trailing newline if missing
+  if [ -n "$(tail -c1 "$file")" ]; then
+    printf '\n' >> "$file"
+    git add "$file"
+  fi
+done
+
+# Run all checks in parallel
+npm run format:check &
+PID_FMT=$!
+npm run lint:app &
+PID_LINT_APP=$!
+npm run lint:deno &
+PID_LINT_DENO=$!
+npm run typecheck:app &
+PID_TC_APP=$!
+npm run typecheck:deno &
+PID_TC_DENO=$!
+
+FAILED=0
+wait $PID_FMT       || FAILED=1
+wait $PID_LINT_APP  || FAILED=1
+wait $PID_LINT_DENO || FAILED=1
+wait $PID_TC_APP    || FAILED=1
+wait $PID_TC_DENO   || FAILED=1
+
+exit $FAILED
