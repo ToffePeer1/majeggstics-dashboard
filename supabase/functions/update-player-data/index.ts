@@ -38,7 +38,7 @@ function transformPlayer(player: BotApiPlayer, snapshotDate: string) {
     te: player.TE || null,
     num_prestiges: player.numPrestiges || null,
     updated_at: validateDate(player.updatedAt),
-    gains_saturday: player.gains?.saturday || null,
+    gains_saturday: player.gains?.saturday || player.gains?.session || null,
     max_mystical_eggs: player.maxMysticalEggs || null
   };
 }

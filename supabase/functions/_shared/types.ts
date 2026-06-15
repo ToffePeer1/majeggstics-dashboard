@@ -34,7 +34,8 @@ export interface BotApiPlayer {
   numPrestiges?: number | null;
   updatedAt: string; // ISO timestamp
   gains?: {
-    saturday?: number | null;
+    saturday?: object | null;
+    session?: object | null;
     eggDay?: Array<{
       year: number;
       eggDayStartSE?: number | null;
